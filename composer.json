@@ -1,25 +1,147 @@
 {
-    "name": "ecomailcz/gosms-client",
-    "description": "Client for GoSms.cz api",
-    "license": ["MIT"],
+    "name": "ecomailcz/laravel-gosms",
+    "description": "Laravel package for GoSms.cz API client",
+    "license": [
+        "MIT"
+    ],
+    "type": "library",
+    "keywords": [
+        "laravel",
+        "gosms",
+        "sms",
+        "api",
+        "client"
+    ],
+    "authors": [
+        {
+            "name": "Ecomail.cz",
+            "email": "info@ecomail.cz"
+        }
+    ],
     "require": {
         "php": "^8.4",
-        "giggsey/libphonenumber-for-php-lite": "^8.13.29 | ^9.0.15",
-        "guzzlehttp/guzzle": "^7.10.0"
+        "giggsey/libphonenumber-for-php-lite": "^8.13.29 || ^9.0.15",
+        "guzzlehttp/guzzle": "^7.10.0",
+        "illuminate/support": "^9.0 || ^10.0 || ^11.0",
+        "spatie/laravel-data": "^4.17"
     },
-  "require-dev": {
-    "roave/security-advisories": "dev-latest"
-  },
+    "require-dev": {
+        "ergebnis/composer-normalize": "^2.48.2",
+        "laravel/pint": "^1.25.1",
+        "orchestra/testbench": "^7.0 || ^8.36",
+        "pekral/phpcs-rules": "^0.4.2",
+        "pekral/phpstan-rules": "^0.4.2",
+        "pekral/rector-rules": "^0.4.2",
+        "phpstan/phpstan-deprecation-rules": ">=2.0.3",
+        "phpstan/phpstan-phpunit": "^2.0.7",
+        "phpunit/phpunit": "^10.5",
+        "roave/security-advisories": "dev-latest"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "autoload": {
-		"psr-4": {
-			"EcomailGoSms\\": ["src/"]
-		}
-	},
-  "config": {
-    "optimize-autoloader": true,
-    "preferred-install": "dist",
-    "sort-packages": true
-  },
-  "minimum-stability": "stable",
-  "prefer-stable": true
+        "psr-4": {
+            "EcomailGoSms\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "EcomailGoSms\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "ergebnis/composer-normalize": true,
+            "phpstan/extension-installer": true
+        },
+        "bump-after-update": true,
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "aliases": {
+                "GoSms": "EcomailGoSms\\Laravel\\GoSmsFacade"
+            },
+            "providers": [
+                "EcomailGoSms\\Laravel\\GoSmsServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "analyse": [
+            "echo \"🔍 Running PHPStan static analysis...\"",
+            "vendor/bin/phpstan analyse --memory-limit=2G"
+        ],
+        "check": [
+            "echo \"🚀 Running full quality check...\"",
+            "@normalize-check",
+            "@phpcs-check",
+            "@pint-check",
+            "@rector-check",
+            "@analyse",
+            "@security-audit",
+            "@test",
+            "echo \"✅ All checks completed!\""
+        ],
+        "coverage": [
+            "echo \"📊 Running code coverage analysis...\"",
+            "@test:coverage"
+        ],
+        "fix": [
+            "echo \"🔧 Running all fixes...\"",
+            "@normalize-fix",
+            "@rector-fix",
+            "@pint-fix",
+            "@phpcs-fix",
+            "echo \"✅ All fixes completed!\""
+        ],
+        "normalize-check": [
+            "echo \"📝 Checking Composer normalize...\"",
+            "composer normalize --dry-run"
+        ],
+        "normalize-fix": [
+            "echo \"📝 Running Composer normalize fix...\"",
+            "composer normalize"
+        ],
+        "phpcs-check": [
+            "echo \"✅ Running PHP CodeSniffer check...\"",
+            "vendor/bin/phpcs --standard=ruleset.xml src/ tests/ check-coverage.php"
+        ],
+        "phpcs-fix": [
+            "echo \"🔧 Running PHP CodeSniffer fix...\"",
+            "vendor/bin/phpcbf --standard=ruleset.xml src/ tests/ check-coverage.php || true"
+        ],
+        "pint-check": [
+            "echo \"🎨 Running Laravel Pint check...\"",
+            "vendor/bin/pint src/ tests/ check-coverage.php --test"
+        ],
+        "pint-fix": [
+            "echo \"🎨 Running Laravel Pint fixes...\"",
+            "vendor/bin/pint src/ tests/ check-coverage.php"
+        ],
+        "rector-check": [
+            "echo \"🔄 Running Rector check (dry-run)...\"",
+            "vendor/bin/rector process --dry-run"
+        ],
+        "rector-fix": [
+            "echo \"🔄 Running Rector fixes...\"",
+            "vendor/bin/rector process"
+        ],
+        "security-audit": [
+            "echo \"🔒 Running Composer security audit...\"",
+            "composer audit --format=summary"
+        ],
+        "test": [
+            "echo \"🧪 Running tests...\"",
+            "vendor/bin/phpunit --no-coverage"
+        ],
+        "test:coverage": [
+            "echo \"📊 Running coverage tests with 100% minimum...\"",
+            "php -dpcov.enabled=1 -dpcov.directory=src/ -dxdebug.mode=off vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-html=coverage-html --coverage-text",
+            "php check-coverage.php"
+        ]
+    }
 }
