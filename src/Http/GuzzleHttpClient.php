@@ -12,48 +12,36 @@ use GuzzleHttp\Exception\GuzzleException;
 final readonly class GuzzleHttpClient
 {
 
-    private const int TIMEOUT = 30;
-
     private GuzzleClient $guzzleClient;
 
     /**
      * @param array{base_uri?: string, timeout?: int}|null $config
      */
-    public function __construct(?GuzzleClient $guzzleClient = null, ?array $config = null)
-    {
-        if ($guzzleClient !== null) {
-            $this->guzzleClient = $guzzleClient;
-
-            return;
-        }
-
-        $baseUri = $config !== null && isset($config['base_uri']) ? $config['base_uri'] : null;
-        $timeout = $config !== null && isset($config['timeout']) ? $config['timeout'] : null;
-
-        // @phpstan-ignore cast.string
-        $baseUri ??= (string) config('gosms.base_uri', GoSmsRequest::BASE_URL . GoSmsRequest::API_PATH . '/');
-        // @phpstan-ignore cast.int
-        $timeout ??= (int) config('gosms.timeout', self::TIMEOUT);
-        $this->guzzleClient = new GuzzleClient([
-            'base_uri' => $baseUri,
-            'timeout' => $timeout,
-        ]);
+    public function __construct(
+        ?GuzzleClient $guzzleClient = null,
+        ?array $config = null,
+        private HttpClientDataBuilder $dataBuilder = new HttpClientDataBuilder(),
+    ) {
+        $this->guzzleClient = $guzzleClient ?? new GuzzleClient($this->resolveConfig($config));
     }
 
     /**
      * @param array<string, mixed> $data
      * @param array<string, string> $headers
-     * @return array{body: array<string, mixed>, status: int}
+     * @return array{
+     *   body: array<string, mixed>,
+     *   status: int
+     * }
      * @throws \EcomailGoSms\Exceptions\Request|\JsonException
      */
     public function request(string $method, string $uri, array $data = [], array $headers = []): array
     {
         try {
-            $options = $this->buildRequestOptions($method, $data, $headers);
+            $options = $this->dataBuilder->build($method, $data, $headers);
             $response = $this->guzzleClient->request($method, $uri, $options);
 
             return [
-                'body' => $this->decodeResponseBody($response->getBody()->getContents()),
+                'body' => $this->dataBuilder->decodeResponseBody($response->getBody()->getContents()),
                 'status' => $response->getStatusCode(),
             ];
         } catch (GuzzleException $e) {
@@ -62,45 +50,25 @@ final readonly class GuzzleHttpClient
     }
 
     /**
-     * @param array<string, mixed> $data
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
+     * @param array{base_uri?: string, timeout?: int}|null $config
+     * @return array{base_uri: string, timeout?: int}
      */
-    private function buildRequestOptions(string $method, array $data, array $headers): array
+    private function resolveConfig(?array $config): array
     {
-        $options = ['headers' => $headers];
+        $configArray = $config ?? [];
+        $baseUri = $configArray['base_uri'] ?? null;
+        $timeout = $configArray['timeout'] ?? config('gosms.timeout');
+        // @phpstan-ignore cast.string
+        $baseUri ??= (string) config('gosms.base_uri', GoSmsRequest::BASE_URL . GoSmsRequest::API_PATH . '/');
 
-        if ($data !== []) {
-            if (in_array(strtoupper($method), ['POST', 'PUT', 'PATCH'], true)) {
-                $options['form_params'] = $data;
-            } else {
-                $options['query'] = $data;
-            }
+        $guzzleConfig = ['base_uri' => $baseUri];
+
+        if ($timeout !== null) {
+            // @phpstan-ignore cast.int
+            $guzzleConfig['timeout'] = (int) $timeout;
         }
 
-        return $options;
-    }
-
-    /**
-     * @return array<string, mixed>
-     * @throws \EcomailGoSms\Exceptions\Request
-     * @throws \JsonException
-     */
-    private function decodeResponseBody(string $body): array
-    {
-        $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
-
-        if (!is_array($decoded)) {
-            return [];
-        }
-
-        $result = [];
-
-        foreach ($decoded as $key => $value) {
-            $result[(string) $key] = $value;
-        }
-
-        return $result;
+        return $guzzleConfig;
     }
 
 }
