@@ -9,7 +9,9 @@ require __DIR__ . '/bootstrap.php';
 $client = getAuthenticatedClient();
 $channelId = getChannelId();
 
-$recipients = array_slice($argv, 1);
+$cliArgs = $_SERVER['argv'] ?? [];
+/** @var list<string> $recipients */
+$recipients = array_slice(is_array($cliArgs) ? $cliArgs : [], 1);
 
 if ($recipients === []) {
     echo "Usage: php send-bulk-messages.php <phone1> [phone2] [phone3] ...\n";

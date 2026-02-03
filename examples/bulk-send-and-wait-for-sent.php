@@ -93,7 +93,9 @@ function getClientWithCachedToken(): GoSmsClient
 $client = getClientWithCachedToken();
 $channelId = getChannelId();
 
-$recipients = array_slice($argv, 1);
+$cliArgs = $_SERVER['argv'] ?? [];
+/** @var list<string> $recipients */
+$recipients = array_slice(is_array($cliArgs) ? $cliArgs : [], 1);
 
 if ($recipients === []) {
     echo "Usage: php bulk-send-and-wait-for-sent.php <phone1> [phone2] ...\n";

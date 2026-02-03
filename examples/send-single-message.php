@@ -9,8 +9,9 @@ require __DIR__ . '/bootstrap.php';
 $client = getAuthenticatedClient();
 $channelId = getChannelId();
 
-$recipient = $argv[1] ?? null;
-$text = $argv[2] ?? 'Test SMS from examples.';
+$cliArgs = is_array($_SERVER['argv'] ?? null) ? $_SERVER['argv'] : [];
+$recipient = isset($cliArgs[1]) && is_string($cliArgs[1]) ? $cliArgs[1] : null;
+$text = isset($cliArgs[2]) && is_string($cliArgs[2]) ? $cliArgs[2] : 'Test SMS from examples.';
 
 if ($recipient === null) {
     echo "Usage: php send-single-message.php <phone_number> [\"<message text>\"]\n";
