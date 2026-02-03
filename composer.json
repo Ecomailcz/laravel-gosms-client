@@ -1,12 +1,12 @@
 {
-    "name": "ecomailcz/laravel-gosms",
+    "name": "ecomailcz/ecomail-gosms",
     "description": "Laravel package for GoSms.cz API client",
     "license": [
         "MIT"
     ],
     "type": "library",
     "keywords": [
-        "laravel",
+        "Laravel",
         "gosms",
         "sms",
         "api",
@@ -19,25 +19,25 @@
         }
     ],
     "require": {
-        "php": "^8.4|^8.5",
+        "php": "^8.4",
         "giggsey/libphonenumber-for-php-lite": "^8.13.29 || ^9.0.23",
         "guzzlehttp/guzzle": "^7.10.0",
-        "illuminate/support": "^9.0 || ^10.0 || ^11.0",
+        "illuminate/support": "^12.0",
         "spatie/laravel-data": "^4.19.1"
     },
     "require-dev": {
         "ergebnis/composer-normalize": "^2.49.0",
         "laravel/pint": "^1.27.0",
-        "orchestra/testbench": "^7.0 || ^8.37",
+        "orchestra/testbench": "^10.9",
         "pekral/cursor-rules": ">=0.3",
         "pekral/phpcs-rules": "^0.4.6",
         "pekral/phpstan-rules": "^0.4.5",
         "pekral/rector-rules": "^0.4.7",
-        "pestphp/pest": ">=2.36.1",
-        "pestphp/pest-plugin-laravel": ">=2.4",
+        "pestphp/pest": "^4",
+        "pestphp/pest-plugin-laravel": "^4",
         "phpstan/phpstan-deprecation-rules": ">=2.0.3",
+        "phpstan/phpstan-mockery": "^2.0",
         "phpstan/phpstan-phpunit": "^2.0.12",
-        "phpunit/phpunit": "^10.5.63",
         "roave/security-advisories": "dev-latest"
     },
     "minimum-stability": "dev",
@@ -81,7 +81,7 @@
         ],
         "build": [
             "echo \"Building package...\"",
-            "composer cursor-rules-refresh && composer fix && composer check"
+            "composer cursor-rules-refresh && composer dump-autoload && composer fix && composer check"
         ],
         "check": [
             "echo \"🚀 Running full quality check...\"",
@@ -120,19 +120,19 @@
         ],
         "phpcs-check": [
             "echo \"✅ Running PHP CodeSniffer check...\"",
-            "vendor/bin/phpcs --standard=ruleset.xml src/ tests/"
+            "vendor/bin/phpcs --standard=ruleset.xml src/ tests/ examples/"
         ],
         "phpcs-fix": [
             "echo \"🔧 Running PHP CodeSniffer fix...\"",
-            "vendor/bin/phpcbf --standard=ruleset.xml src/ tests/ || true"
+            "vendor/bin/phpcbf --standard=ruleset.xml src/ tests/ examples/ || true"
         ],
         "pint-check": [
             "echo \"🎨 Running Laravel Pint check...\"",
-            "vendor/bin/pint src/ tests/ --test"
+            "vendor/bin/pint src/ tests/ examples/ --test"
         ],
         "pint-fix": [
             "echo \"🎨 Running Laravel Pint fixes...\"",
-            "vendor/bin/pint src/ tests/"
+            "vendor/bin/pint src/ tests/ examples/"
         ],
         "rector-check": [
             "echo \"🔄 Running Rector check (dry-run)...\"",
@@ -152,7 +152,7 @@
         ],
         "test:coverage": [
             "echo \"📊 Running coverage tests with 100% minimum...\"",
-            "php -dpcov.enabled=1 -dpcov.directory=src/Laravel/ -dxdebug.mode=off vendor/bin/pest -c phpunit.coverage.xml --coverage --min=100 --coverage-clover=coverage.xml --coverage-html=coverage-html --coverage-text"
+            "php -dpcov.enabled=1 -dpcov.directory=src/ -dxdebug.mode=off vendor/bin/pest -c phpunit.coverage.xml --coverage --min=100 --coverage-clover=coverage.xml --coverage-html=coverage-html --coverage-text"
         ]
     }
 }

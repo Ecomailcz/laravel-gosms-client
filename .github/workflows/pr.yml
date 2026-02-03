@@ -6,7 +6,7 @@ on:
   push:
     branches: [ master ]
 
-# To add more PHP versions, change ['8.4', '8.5''] to ['8.4', '8.5'] in all matrix definitions below
+# To add more PHP versions, change ['8.4', '8.5'] in all matrix definitions below
 
 jobs:
   phpcs-check:
@@ -15,11 +15,11 @@ jobs:
 
     strategy:
       matrix:
-        php-version: ['8.4', '8.5'']
+        php-version: ['8.4', '8.5']
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -30,7 +30,7 @@ jobs:
 
       - name: Cache Composer packages
         id: composer-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: vendor
           key: ${{ runner.os }}-php-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
@@ -50,11 +50,11 @@ jobs:
 
     strategy:
       matrix:
-        php-version: ['8.4', '8.5'']
+        php-version: ['8.4', '8.5']
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -65,7 +65,7 @@ jobs:
 
       - name: Cache Composer packages
         id: composer-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: vendor
           key: ${{ runner.os }}-php-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
@@ -85,11 +85,11 @@ jobs:
 
     strategy:
       matrix:
-        php-version: ['8.4', '8.5'']
+        php-version: ['8.4', '8.5']
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -100,7 +100,7 @@ jobs:
 
       - name: Cache Composer packages
         id: composer-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: vendor
           key: ${{ runner.os }}-php-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
@@ -120,11 +120,11 @@ jobs:
 
     strategy:
       matrix:
-        php-version: ['8.4', '8.5'']
+        php-version: ['8.4', '8.5']
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -135,7 +135,7 @@ jobs:
 
       - name: Cache Composer packages
         id: composer-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: vendor
           key: ${{ runner.os }}-php-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
@@ -155,11 +155,11 @@ jobs:
 
     strategy:
       matrix:
-        php-version: ['8.4', '8.5'']
+        php-version: ['8.4', '8.5']
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -170,7 +170,7 @@ jobs:
 
       - name: Cache Composer packages
         id: composer-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: vendor
           key: ${{ runner.os }}-php-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
@@ -190,11 +190,11 @@ jobs:
 
     strategy:
       matrix:
-        php-version: ['8.4', '8.5'']
+        php-version: ['8.4', '8.5']
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -205,7 +205,7 @@ jobs:
 
       - name: Cache Composer packages
         id: composer-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: vendor
           key: ${{ runner.os }}-php-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
@@ -225,11 +225,11 @@ jobs:
 
     strategy:
       matrix:
-        php-version: ['8.4', '8.5'']
+        php-version: ['8.4', '8.5']
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -240,7 +240,7 @@ jobs:
 
       - name: Cache Composer packages
         id: composer-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: vendor
           key: ${{ runner.os }}-php-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}

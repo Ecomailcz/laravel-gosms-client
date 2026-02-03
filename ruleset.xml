@@ -8,6 +8,7 @@
     <!-- Files to check -->
     <file>src</file>
     <file>tests</file>
+    <file>examples</file>
 
     <!-- Exclude vendor directory -->
     <exclude-pattern>vendor/*</exclude-pattern>
@@ -71,4 +72,10 @@
     <rule ref="Generic.Files.LineLength.TooLong">
         <severity>3</severity> <!-- Convert to warning -->
     </rule>
+
+    <!-- Allow super globals in examples (env loading, CLI) -->
+    <rule ref="SlevomatCodingStandard.Variables.DisallowSuperGlobalVariable">
+        <exclude-pattern>examples/*</exclude-pattern>
+    </rule>
+
 </ruleset>

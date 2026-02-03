@@ -6,18 +6,20 @@ namespace EcomailGoSms\Http;
 
 use EcomailGoSms\Contracts\HttpClient;
 use EcomailGoSms\Exceptions\Request;
+use EcomailGoSms\Requests\Request as GoSmsRequest;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\GuzzleException;
 
 final readonly class GuzzleHttpClient implements HttpClient
 {
 
-    private const string API_URL = 'https://api.gosms.eu/api/v2/';
-
     private const int TIMEOUT = 30;
 
-    public function __construct(private GuzzleClient $guzzleClient = new GuzzleClient(['base_uri' => self::API_URL, 'timeout' => self::TIMEOUT]))
-    {
+    public function __construct(
+        private GuzzleClient $guzzleClient = new GuzzleClient(
+            ['base_uri' => GoSmsRequest::BASE_URL . GoSmsRequest::API_PATH . '/', 'timeout' => self::TIMEOUT],
+        ),
+    ) {
     }
 
     /**
@@ -70,15 +72,10 @@ final readonly class GuzzleHttpClient implements HttpClient
     {
         $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
 
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw Request::networkError('Invalid JSON response from API');
-        }
-
         if (!is_array($decoded)) {
             return [];
         }
 
-        // Ensure all keys are strings for type safety
         $result = [];
 
         foreach ($decoded as $key => $value) {

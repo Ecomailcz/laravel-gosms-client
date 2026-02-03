@@ -5,10 +5,10 @@ declare(strict_types = 1);
 namespace EcomailGoSms\Laravel;
 
 use EcomailGoSms\Client;
-use EcomailGoSms\Contracts\HttpClient;
-use EcomailGoSms\Http\GuzzleHttpClient;
+use EcomailGoSms\GoSmsClient;
+use EcomailGoSms\Requests\Request;
+use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Contracts\Container\Container;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\ServiceProvider;
 
 final class GoSmsServiceProvider extends ServiceProvider
@@ -18,40 +18,47 @@ final class GoSmsServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__ . '/../../config/gosms.php', 'gosms');
 
-        $this->app->singleton(Client::class, static function (Container $app): Client {
-            $clientId = Config::get('gosms.client_id');
-            $clientSecret = Config::get('gosms.client_secret');
-            $defaultChannel = Config::get('gosms.default_channel');
-            
-            if (!is_string($clientId) || !is_string($clientSecret) || !is_int($defaultChannel)) {
-                throw new \InvalidArgumentException('Invalid GoSms configuration');
-            }
-            
-            $httpClient = $app->make(GuzzleHttpClient::class);
-            
-            if (!$httpClient instanceof HttpClient) {
+        $this->app->singleton(GuzzleClient::class, static fn (): GuzzleClient => new GuzzleClient([
+            'base_uri' => Request::BASE_URL,
+            'timeout' => 10,
+        ]));
+
+        $this->app->singleton(Client::class, static function (Container $app): GoSmsClient {
+            $publicKey = config()->string('gosms.client_id');
+            $privateKey = config()->string('gosms.client_secret');
+            $defaultChannel = config()->integer('gosms.default_channel');
+
+            $httpClient = $app->make(GuzzleClient::class);
+
+            /** @phpstan-ignore instanceof.alwaysTrue (binding can be overridden in tests) */
+            if (!$httpClient instanceof GuzzleClient) {
                 throw new \InvalidArgumentException('Invalid HTTP client instance');
             }
-            
-            return new Client(
-                $clientId,
-                $clientSecret,
+
+            return new GoSmsClient(
+                $publicKey,
+                $privateKey,
+                null,
                 $defaultChannel,
+                'password',
+                '',
                 $httpClient,
             );
         });
 
-        $this->app->alias(Client::class, 'gosms');
+        $this->app->alias(Client::class, GoSmsClient::class);
+        $this->app->alias(GoSmsClient::class, 'gosms');
     }
 
-    /**
-     * Bootstrap services.
-     */
     public function boot(): void
     {
         $this->publishes([
             __DIR__ . '/../../config/gosms.php' => config_path('gosms.php'),
-        ], 'config');
+        ], ['config', 'gosms-config']);
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([InstallGoSmsCommand::class]);
+        }
     }
 
     /**

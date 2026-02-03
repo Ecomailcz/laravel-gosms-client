@@ -34,11 +34,10 @@ Thumbs.db
 .env.*.local
 
 # Package specific
-/config/gosms.php
+examples/.gosms-token-cache.json
 
 
 # PHPUnit
 /.phpunit.cache
 coverage.xml
-phpunit.coverage.xml
 /coverage-html

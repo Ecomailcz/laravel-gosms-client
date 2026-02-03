@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace EcomailGoSms\Tests\Laravel;
+namespace EcomailGoSms\Tests\Unit\Laravel;
 
 use EcomailGoSms\Laravel\GoSmsFacade;
 

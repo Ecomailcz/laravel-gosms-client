@@ -1,110 +1,230 @@
-# Laravel GoSms Package
+# Ecomail GoSms
 
-Laravel package for GoSms.cz API client. This package provides an easy interface for sending SMS messages through GoSms.cz API in Laravel applications.
+[![PHP Version](https://img.shields.io/badge/php-%3E%3D8.4-8892BF.svg)](https://php.net/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![PHPStan](https://img.shields.io/badge/PHPStan-level%20max-brightgreen.svg)](https://phpstan.org/)
+[![Pest](https://img.shields.io/badge/Pest-v4-f472b6.svg)](https://pestphp.com/)
+[![Code Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/ecomailcz/ecomail-gosms)
+
+Laravel package providing a client for the [GoSms.cz](https://gosms.cz) API.
+
+It supports sending single SMS, bulk sending, connection verification, and message status queries via a Laravel application using the facade and service provider.
+
+---
+
+## Features
+
+| Component | Purpose |
+|-----------|---------|
+| **GoSms API v2** | Single SMS, bulk send, message status |
+| **Laravel integration** | Service provider, `GoSms` facade, config via `config/gosms.php` |
+| **[Pest](https://pestphp.com/)** | Testing with 100% coverage requirement |
+| **[PHPStan](https://phpstan.org/)** | Static analysis at maximum level |
+| **[Laravel Pint](https://laravel.com/docs/pint)** | Consistent code style |
+| **[Rector](https://getrector.org/)** | Automated refactoring |
+| **[PHP CodeSniffer](https://github.com/PHPCSStandards/PHP_CodeSniffer)** | Coding standard enforcement |
+| **[Security Advisories](https://github.com/Roave/SecurityAdvisories)** | Dependency vulnerability checking |
+
+---
 
 ## Installation
 
-### Composer
-
 ```bash
-composer require ecomailcz/laravel-gosms
+composer require ecomailcz/ecomail-gosms
 ```
 
-### Publishing Configuration
+After installation, run the install command to copy the config to `config/gosms.php` and display `.env` instructions:
 
 ```bash
-php artisan vendor:publish --provider="EcomailGoSms\Laravel\GoSmsServiceProvider" --tag="config"
+php artisan gosms:install
 ```
 
-## Configuration
+Alternatively, you can publish only the config manually:
 
-After publishing the configuration file, set the following variables in `.env`:
+```bash
+php artisan vendor:publish --tag=gosms-config
+```
 
-```env
+Add to your `.env`:
+
+```
 GOSMS_CLIENT_ID=your_client_id
 GOSMS_CLIENT_SECRET=your_client_secret
 GOSMS_DEFAULT_CHANNEL=1
 ```
 
-You can get these credentials from your account at [GoSms.cz](https://app.gosms.cz).
+---
 
-## Usage
+## Configuration
 
-### Basic Usage
+The package registers config from `config/gosms.php` (values from `.env`). The service provider and facade are loaded automatically (Laravel package discovery).
 
-```php
-use EcomailGoSms\Client;
-
-// Dependency injection through constructor
-public function __construct(Client $goSms)
-{
-    $this->goSms = $goSms;
-}
-
-// Send SMS
-$result = $this->goSms->authenticate()->sendSms('+420123456789', 'Hello from Laravel!');
-```
-
-### Using with Facade
+Usage via facade:
 
 ```php
 use EcomailGoSms\Laravel\GoSmsFacade as GoSms;
 
-// Send single SMS
-$result = GoSms::authenticate()->sendSms('+420123456789', 'Hello from Laravel!');
+// Verify connection
+GoSms::authenticate();
 
-// Send multiple SMS at once
-$phoneNumbers = ['+420123456789', '+420987654321'];
-$result = GoSms::authenticate()->sendMultipleSms($phoneNumbers, 'Bulk message!');
+// Send a single SMS
+GoSms::sendMessageAsync('+420123456789', 'Message text');
+
+// Bulk send
+GoSms::sendMessagesAsync(['+420123456789', '+420987654321'], 'Shared text');
 ```
 
-### Using with specific channel
+More examples and how to run the example scripts are in [examples/README.md](examples/README.md).
 
-```php
-$result = GoSms::authenticate()->sendSms('+420123456789', 'Message', 2);
+---
+
+## Available Commands
+
+### Run All Quality Checks
+
+```bash
+composer check
 ```
 
-## API Reference
+Runs the full quality pipeline:
+- Composer normalize
+- PHP CodeSniffer
+- Laravel Pint
+- Rector
+- PHPStan
+- Security audit
+- Tests with 100% coverage
 
-### GoSmsClient
+### Apply All Fixes
 
-#### `authenticate(): GoSmsClient`
-Authenticates the client with GoSms.cz API.
+```bash
+composer fix
+```
 
-#### `sendSms(string $phoneNumber, string $message, ?int $channel = null): stdClass`
-Sends SMS message to a single phone number.
+Automatically fixes code style and applies refactoring:
+- Composer normalize
+- Rector refactoring
+- Laravel Pint formatting
+- PHP CodeSniffer fixes
 
-#### `sendMultipleSms(array $phoneNumbers, string $message, ?int $channel = null): stdClass`
-Sends SMS message to multiple phone numbers at once.
+### Individual Commands
 
-#### `makeRequest(string $type, string $endpoint, ?array $params): stdClass`
-Makes a custom HTTP request to GoSms.cz API.
+| Command | Description |
+|---------|-------------|
+| `composer test` | Run tests |
+| `composer test:coverage` | Run tests with coverage (min 100%) |
+| `composer analyse` | Run PHPStan |
+| `composer pint-check` | Check code style |
+| `composer pint-fix` | Fix code style |
+| `composer rector-check` | Check for refactoring opportunities (dry-run) |
+| `composer rector-fix` | Apply refactoring |
+| `composer phpcs-check` | Check coding standards |
+| `composer phpcs-fix` | Fix coding standards |
+| `composer normalize-check` | Check composer.json normalization |
+| `composer normalize-fix` | Normalize composer.json |
+| `composer security-audit` | Check for vulnerable dependencies |
 
-## Exceptions
+---
 
-The package defines the following exceptions:
+## Project Structure
 
-- `EcomailGoSms\AuthorizationException` - Authentication error
-- `EcomailGoSms\InvalidFormat` - Invalid message format
-- `EcomailGoSms\InvalidNumber` - Invalid phone number
-- `EcomailGoSms\RequestException` - HTTP request error
+```
+ecomail-gosms/
+├── .github/
+│   └── workflows/
+│       ├── pr.yml                 # Checks on PR and push
+│       ├── composer-update.yml    # Automated dependency updates
+│       └── update-changelog.yml  # Changelog updates
+├── examples/
+│   ├── README.md                 # Examples docs and how to run
+│   ├── .env.example
+│   ├── authenticate.php
+│   ├── send-single-message.php
+│   ├── send-bulk-messages.php
+│   └── bulk-send-and-wait-for-sent.php
+├── src/
+│   ├── GoSmsClient.php
+│   ├── Client.php
+│   ├── Message.php
+│   ├── SentMessage.php
+│   ├── Contracts/
+│   ├── Data/
+│   ├── Exceptions/
+│   ├── Http/
+│   ├── Laravel/
+│   ├── Requests/
+│   └── Responses/
+├── tests/
+│   ├── Unit/
+│   └── Fixtures/
+├── composer.json
+├── phpstan.neon
+├── pint.json
+├── rector.php
+├── ruleset.xml
+└── LICENSE
+```
+
+---
+
+## Configuration
+
+### PHPStan
+
+Static analysis runs at **max level** with additional rules (deprecation, Mockery).
+
+### Testing
+
+Tests use **Pest v4** with a 100% coverage requirement:
+
+```bash
+composer test:coverage
+```
+
+### Code Style
+
+Laravel Pint enforces PSR-12 and project rules.
+
+### Rector
+
+Refactoring uses rules from the `pekral/rector-rules` package.
+
+---
+
+## GitHub Actions
+
+The repository uses these workflows:
+
+| Workflow | Purpose |
+|----------|---------|
+| `pr.yml` | Run all checks on pull requests and push |
+| `composer-update.yml` | Automated dependency updates |
+| `update-changelog.yml` | Automated changelog updates |
+
+---
 
 ## Requirements
 
-- PHP 8.1 or higher
-- Laravel 9.0 or higher
-- Guzzle HTTP Client
-- libphonenumber-for-php-lite
+- PHP 8.4 or higher
+- Laravel 12.x
+- Composer 2.x
+
+---
+
+## Contributing
+
+Contributions are welcome. Open an issue or submit a Pull Request.
+
+---
 
 ## License
 
-MIT License
+This package is open-source software licensed under the [MIT License](LICENSE).
 
-## Support
+---
 
-For support contact [Ecomail.cz](https://ecomail.cz) or create an issue in this repository.
+## Author
 
-## Links
+**Ecomail.cz**
 
-- [GoSms.cz API documentation](https://api.gosms.eu/redoc#tag/Messages)
-- [Ecomail.cz](https://ecomail.cz)
+- Email: info@ecomail.cz

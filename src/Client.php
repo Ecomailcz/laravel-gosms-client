@@ -4,256 +4,124 @@ declare(strict_types = 1);
 
 namespace EcomailGoSms;
 
-use EcomailGoSms\Contracts\HttpClient;
-use EcomailGoSms\Data\AuthRequest;
-use EcomailGoSms\Data\AuthResponse;
-use EcomailGoSms\Data\BulkSmsRequest;
-use EcomailGoSms\Data\BulkSmsResponse;
-use EcomailGoSms\Data\SmsRequest;
-use EcomailGoSms\Data\SmsResponse;
-use EcomailGoSms\Exceptions\Authorization;
-use EcomailGoSms\Exceptions\InvalidFormat;
-use EcomailGoSms\Exceptions\Request;
+use EcomailGoSms\Exceptions\BadRequest;
+use EcomailGoSms\Exceptions\InvalidRequest;
+use EcomailGoSms\Exceptions\UnauthorizedRequest;
+use EcomailGoSms\Requests\AuthenticationRequest;
+use EcomailGoSms\Requests\RefreshAccessTokenRequest;
+use EcomailGoSms\Requests\Request;
+use EcomailGoSms\Responses\AuthenticationResponse;
+use EcomailGoSms\Responses\RefreshAccessTokenResponse;
+use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\Exception\ClientException;
+use Psr\Http\Message\ResponseInterface;
+use SensitiveParameter;
+use Throwable;
 
-final class Client
+use function in_array;
+use function sprintf;
+
+abstract class Client
 {
 
-    private ?AuthResponse $authResponse = null;
-
     public function __construct(
-        private readonly string $clientId,
-        private readonly string $clientSecret,
-        private readonly int $defaultChannel,
-        private readonly HttpClient $httpClient,
+        protected readonly string $publicKey,
+        #[SensitiveParameter]
+        protected readonly string $privateKey,
+        protected ?string $accessToken = null,
+        protected readonly ?int $defaultChannel = null,
+        protected readonly string $grantType = 'password',
+        protected readonly string $scope = '',
+        private readonly GuzzleClient $httpClient = new GuzzleClient(['base_uri' => Request::BASE_URL, 'timeout' => 10]),
     ) {
     }
 
-    /**
-     * Authenticate with GoSms API
-     *
-     * @throws \EcomailGoSms\Exceptions\Authorization
-     * @throws \EcomailGoSms\Exceptions\Request
-     */
-    public function authenticate(): self
+    public function getDefaultChannel(): ?int
     {
-        $authRequest = new AuthRequest($this->clientId, $this->clientSecret);
-
-        /** @var array<string, mixed> $data */
-        $data = $authRequest->toArray();
-        $response = $this->httpClient->request('POST', 'oauth/token', $data);
-
-        if ($response['status'] !== 200) {
-            throw Authorization::authenticationFailed();
-        }
-
-        $body = $response['body'];
-        
-        if (!isset($body['access_token'])) {
-            throw Authorization::authenticationFailed();
-        }
-
-        $this->authResponse = AuthResponse::from($body);
-
-        return $this;
+        return $this->defaultChannel;
     }
 
     /**
-     * Send SMS to single phone number
-     *
-     * @throws \EcomailGoSms\Exceptions\Authorization
-     * @throws \EcomailGoSms\Exceptions\InvalidFormat
-     * @throws \EcomailGoSms\Exceptions\Request
+     * @throws \EcomailGoSms\Exceptions\BadRequest
+     * @throws \Throwable
      */
-    public function sendSms(string $phoneNumber, string $message, ?int $channel = null): SmsResponse
+    public function refreshToken(string $refreshToken): RefreshAccessTokenResponse
     {
-        $this->ensureAuthenticated();
-        $this->validateMessage($message);
-        $this->validatePhoneNumber($phoneNumber);
+        $request = new RefreshAccessTokenRequest($refreshToken);
 
-        $smsRequest = new SmsRequest($phoneNumber, $message, $channel ?? $this->defaultChannel);
-
-        /** @var array<string, mixed> $data */
-        $data = $smsRequest->toArray();
-        $response = $this->httpClient->request(
-            'POST',
-            'messages/sms',
-            $data,
-            $this->getAuthHeaders(),
-        );
-
-        if ($response['status'] !== 201) {
-            throw $this->createRequest($response);
-        }
-
-        return SmsResponse::from($response['body']);
+        return new RefreshAccessTokenResponse($this->makeRequest($request));
     }
 
     /**
-     * Send SMS to multiple phone numbers
-     *
-     * @param array<int, string> $phoneNumbers
-     * @throws \EcomailGoSms\Exceptions\Authorization
-     * @throws \EcomailGoSms\Exceptions\InvalidFormat
-     * @throws \EcomailGoSms\Exceptions\Request
+     * @throws \EcomailGoSms\Exceptions\BadRequest
+     * @throws \Throwable
      */
-    public function sendMultipleSms(array $phoneNumbers, string $message, ?int $channel = null): BulkSmsResponse
+    public function authenticate(): AuthenticationResponse
     {
-        $this->ensureAuthenticated();
-        $this->validateMessage($message);
-        $this->validatePhoneNumbers($phoneNumbers);
+        $request = new AuthenticationRequest($this->publicKey, $this->privateKey);
 
-        $bulkRequest = new BulkSmsRequest($phoneNumbers, $message, $channel ?? $this->defaultChannel);
-
-        /** @var array<string, mixed> $data */
-        $data = $bulkRequest->toArray();
-        $response = $this->httpClient->request(
-            'POST',
-            'messages/sms/bulk',
-            $data,
-            $this->getAuthHeaders(),
-        );
-
-        if ($response['status'] !== 201) {
-            throw $this->createRequest($response);
-        }
-
-        return BulkSmsResponse::from($response['body']);
+        return new AuthenticationResponse($this->makeRequest($request));
     }
 
-    /**
-     * Make custom HTTP request to GoSms API
-     *
-     * @param array<string, mixed> $params
-     * @return array{status: int, body: array<string, mixed>}
-     * @throws \EcomailGoSms\Exceptions\Authorization
-     * @throws \EcomailGoSms\Exceptions\Request
-     */
-    public function makeRequest(string $method, string $endpoint, ?array $params = null): array
-    {
-        $this->ensureAuthenticated();
-
-        $response = $this->httpClient->request(
-            $method,
-            $endpoint,
-            $params ?? [],
-            $this->getAuthHeaders(),
-        );
-
-        if ($response['status'] >= 400) {
-            throw $this->createRequest($response);
-        }
-
-        return $response;
-    }
-
-    /**
-     * Check if client is authenticated
-     */
-    public function isAuthenticated(): bool
-    {
-        return $this->authResponse !== null;
-    }
-
-    /**
-     * Get current access token
-     */
     public function getAccessToken(): ?string
     {
-        return $this->authResponse?->accessToken;
+        return $this->accessToken;
     }
 
     /**
-     * Ensure client is authenticated
-     *
-     * @throws \EcomailGoSms\Exceptions\Authorization
+     * @throws \EcomailGoSms\Exceptions\BadRequest
+     * @throws \Throwable
      */
-    private function ensureAuthenticated(): void
+    protected function makeRequest(Request $request): ResponseInterface
     {
-        if (!$this->isAuthenticated()) {
-            throw Authorization::invalidCredentials();
-        }
-    }
+        try {
+            return $this->httpClient->request($request->getMethod(), $request->getEndpoint(), $this->buildRequestHeaders($request));
+        } catch (Throwable $throwable) {
+            $this->handleExceptions($throwable);
 
-    /**
-     * Validate message content
-     *
-     * @throws \EcomailGoSms\Exceptions\InvalidFormat
-     */
-    private function validateMessage(string $message): void
-    {
-        if (trim($message) === '') {
-            throw InvalidFormat::invalidMessageFormat('Message cannot be empty');
-        }
-
-        if (strlen($message) > 160) {
-            throw InvalidFormat::invalidMessageFormat('Message too long (max 160 characters)');
+            // @codeCoverageIgnoreStart
+            throw $throwable;
+            // @codeCoverageIgnoreEnd
         }
     }
 
     /**
-     * Get authentication headers
-     *
-     * @return array<string, string>
+     * @return array<string, mixed>
      */
-    private function getAuthHeaders(): array
+    private function buildRequestHeaders(Request $request): array
     {
-        return [
-            'Authorization' => 'Bearer ' . $this->authResponse?->accessToken,
-            'Content-Type' => 'application/x-www-form-urlencoded',
-        ];
+        $options = $request->getOptions();
+
+        if ($this->accessToken !== null) {
+            if (!isset($options['headers']) || !is_array($options['headers'])) {
+                $options['headers'] = [];
+            }
+
+            $options['headers']['Authorization'] = sprintf('Bearer %s', $this->accessToken);
+        }
+
+        return $options;
     }
 
     /**
-     * Create appropriate exception based on response
-     *
-     * @param array{status: int, body: array<string, mixed>} $response
+     * @throws \EcomailGoSms\Exceptions\BadRequest
+     * @throws \Throwable
      */
-    private function createRequest(array $response): Request
+    private function handleExceptions(Throwable $throwable): void
     {
-        $message = $response['body']['message'] ?? $response['body']['error'] ?? 'Unknown error';
-
-        return Request::httpError($response['status'], is_string($message) ? $message : 'Unknown error');
-    }
-
-    /**
-     * Validate single phone number
-     *
-     * @throws \EcomailGoSms\Exceptions\InvalidFormat
-     */
-    private function validatePhoneNumber(string $phoneNumber): void
-    {
-        if (trim($phoneNumber) === '') {
-            throw InvalidFormat::invalidPhoneNumber('Phone number cannot be empty');
+        if ($throwable instanceof ClientException && in_array($throwable->getResponse()->getStatusCode(), [400, 403], true)) {
+            throw new BadRequest($throwable->getResponse());
         }
 
-        // Basic validation - check if it contains only digits, +, -, spaces and parentheses
-        if (preg_match('/^[\d\s\+\-\(\)]+$/', $phoneNumber) !== 1) {
-            throw InvalidFormat::invalidPhoneNumber('Phone number contains invalid characters');
+        if ($throwable instanceof ClientException && $throwable->getResponse()->getStatusCode() === 401) {
+            throw new UnauthorizedRequest($throwable->getResponse());
         }
 
-        // Remove all non-digit characters for length check
-        $digitsOnly = preg_replace('/\D/', '', $phoneNumber);
-        
-        if ($digitsOnly === null || strlen($digitsOnly) < 7 || strlen($digitsOnly) > 15) {
-            throw InvalidFormat::invalidPhoneNumber('Phone number must be between 7 and 15 digits');
-        }
-    }
-
-    /**
-     * Validate multiple phone numbers
-     *
-     * @param array<int, string> $phoneNumbers
-     * @throws \EcomailGoSms\Exceptions\InvalidFormat
-     */
-    private function validatePhoneNumbers(array $phoneNumbers): void
-    {
-        if ($phoneNumbers === []) {
-            throw InvalidFormat::invalidPhoneNumber('Phone numbers array cannot be empty');
+        if ($throwable instanceof ClientException && $throwable->getResponse()->getStatusCode() === 422) {
+            throw new InvalidRequest($throwable->getResponse());
         }
 
-        foreach ($phoneNumbers as $phoneNumber) {
-            $this->validatePhoneNumber($phoneNumber);
-        }
+        throw $throwable;
     }
 
 }
