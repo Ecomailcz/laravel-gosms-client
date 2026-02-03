@@ -77,6 +77,7 @@ More examples: [examples/README.md](examples/README.md).
 
 **Petr Král**
 
+- Contributions welcome, see [CONTRIBUTING.md](CONTRIBUTING.md).
 - GitHub: [@pekral](https://github.com/pekral)
 - Email: kral.petr.88@gmail.com
 - X (Twitter): [https://x.com/kral_petr_88](https://x.com/kral_petr_88)
