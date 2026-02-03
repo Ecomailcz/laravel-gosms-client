@@ -1,5 +1,5 @@
 {
-    "name": "ecomailcz/ecomail-gosms",
+    "name": "ecomailcz/laravel-gosms-client",
     "description": "Laravel package for GoSms.cz API client",
     "license": [
         "MIT"
@@ -12,6 +12,11 @@
         "api",
         "client"
     ],
+    "homepage": "https://github.com/Ecomailcz/laravel-gosms-client",
+    "support": {
+        "issues": "https://github.com/Ecomailcz/laravel-gosms-client/issues",
+        "source": "https://github.com/Ecomailcz/laravel-gosms-client"
+    },
     "authors": [
         {
             "name": "Ecomail.cz",

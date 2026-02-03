@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![PHPStan](https://img.shields.io/badge/PHPStan-level%20max-brightgreen.svg)](https://phpstan.org/)
 [![Pest](https://img.shields.io/badge/Pest-v4-f472b6.svg)](https://pestphp.com/)
-[![Code Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/ecomailcz/ecomail-gosms)
+[![Code Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/Ecomailcz/laravel-gosms-client)
 
 Laravel package providing a client for the [GoSms.cz](https://gosms.cz) API.
 
@@ -30,7 +30,7 @@ It supports sending single SMS, bulk sending, connection verification, and messa
 ## Installation
 
 ```bash
-composer require ecomailcz/ecomail-gosms
+composer require ecomailcz/laravel-gosms-client
 ```
 
 After installation, run the install command to copy the config to `config/gosms.php` and display `.env` instructions:
@@ -129,7 +129,7 @@ Automatically fixes code style and applies refactoring:
 ## Project Structure
 
 ```
-ecomail-gosms/
+laravel-gosms-client/
 ├── .github/
 │   └── workflows/
 │       ├── pr.yml                 # Checks on PR and push
