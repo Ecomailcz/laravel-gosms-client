@@ -12,17 +12,22 @@
         "api",
         "client"
     ],
+    "authors": [
+        {
+            "name": "Petr Král",
+            "email": "kral.petr.88@gmail.com",
+            "homepage": "https://github.com/pekral"
+        },
+        {
+            "name": "Ecomail.cz",
+            "email": "petr@ecomail.cz"
+        }
+    ],
     "homepage": "https://github.com/Ecomailcz/laravel-gosms-client",
     "support": {
         "issues": "https://github.com/Ecomailcz/laravel-gosms-client/issues",
         "source": "https://github.com/Ecomailcz/laravel-gosms-client"
     },
-    "authors": [
-        {
-            "name": "Ecomail.cz",
-            "email": "info@ecomail.cz"
-        }
-    ],
     "require": {
         "php": "^8.4",
         "giggsey/libphonenumber-for-php-lite": "^8.13.29 || ^9.0.23",
@@ -38,7 +43,7 @@
         "pekral/phpcs-rules": "^0.4.6",
         "pekral/phpstan-rules": "^0.4.5",
         "pekral/rector-rules": "^0.4.7",
-        "pestphp/pest": "^4",
+        "pestphp/pest": "^4.3.2",
         "pestphp/pest-plugin-laravel": "^4",
         "phpstan/phpstan-deprecation-rules": ">=2.0.3",
         "phpstan/phpstan-mockery": "^2.0",
