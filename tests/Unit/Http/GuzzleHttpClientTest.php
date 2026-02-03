@@ -2,8 +2,6 @@
 
 declare(strict_types = 1);
 
-namespace EcomailGoSms\Tests\Unit\Http;
-
 use EcomailGoSms\Exceptions\Request as GoSmsRequestException;
 use EcomailGoSms\Http\GuzzleHttpClient;
 use GuzzleHttp\Client as GuzzleClient;
@@ -12,86 +10,93 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use PHPUnit\Framework\TestCase;
+use Illuminate\Support\Facades\Config;
 
-final class GuzzleHttpClientTest extends TestCase
-{
+beforeEach(function (): void {
+    Config::set('gosms.base_uri', 'http://127.0.0.1:19999/');
+    Config::set('gosms.timeout', 30);
+});
 
-    public function testRequestReturnsBodyAndStatus(): void
-    {
-        $mock = new MockHandler([
-            new Response(200, [], '{"access_token":"token","refresh_token":"refresh","token_type":"Bearer"}'),
-        ]);
-        $handlerStack = HandlerStack::create($mock);
-        $guzzleClient = new GuzzleClient(['handler' => $handlerStack]);
-        $client = new GuzzleHttpClient($guzzleClient);
+it('constructor uses passed config when no client passed', function (): void {
+    $client = new GuzzleHttpClient(null, [
+        'base_uri' => 'http://127.0.0.1:19999/',
+        'timeout' => 15,
+    ]);
 
-        $result = $client->request('POST', 'auth/token', ['client_id' => 'id', 'client_secret' => 'secret']);
+    expect(fn (): array => $client->request('GET', 'test'))->toThrow(GoSmsRequestException::class);
+});
 
-        self::assertSame(200, $result['status']);
-        self::assertSame('token', $result['body']['access_token']);
-        self::assertSame('refresh', $result['body']['refresh_token']);
-        self::assertSame('Bearer', $result['body']['token_type']);
-    }
+it('constructor uses config when laravel bootstrapped', function (): void {
+    Config::set('gosms.base_uri', 'http://127.0.0.1:19999/');
+    Config::set('gosms.timeout', 15);
 
-    public function testRequestThrowsOnNetworkError(): void
-    {
-        $mock = new MockHandler([
-            new ConnectException('Connection refused', new Request('POST', 'auth/token')),
-        ]);
-        $handlerStack = HandlerStack::create($mock);
-        $guzzleClient = new GuzzleClient(['handler' => $handlerStack]);
-        $client = new GuzzleHttpClient($guzzleClient);
+    $client = new GuzzleHttpClient();
 
-        $this->expectException(GoSmsRequestException::class);
-        $this->expectExceptionMessage('Network error: Connection refused');
+    expect(fn (): array => $client->request('GET', 'test'))->toThrow(GoSmsRequestException::class);
+});
 
-        $client->request('POST', 'auth/token');
-    }
+it('constructor uses config timeout when only base uri passed', function (): void {
+    Config::set('gosms.timeout', 20);
 
-    public function testRequestThrowsOnInvalidJson(): void
-    {
-        $mock = new MockHandler([
-            new Response(200, [], 'invalid json'),
-        ]);
-        $handlerStack = HandlerStack::create($mock);
-        $guzzleClient = new GuzzleClient(['handler' => $handlerStack]);
-        $client = new GuzzleHttpClient($guzzleClient);
+    $client = new GuzzleHttpClient(null, ['base_uri' => 'http://127.0.0.1:19999/']);
 
-        $this->expectException(\JsonException::class);
+    expect(fn (): array => $client->request('GET', 'test'))->toThrow(GoSmsRequestException::class);
+});
 
-        $client->request('GET', 'messages');
-    }
+it('request returns body and status', function (): void {
+    $mock = new MockHandler([
+        new Response(200, [], '{"access_token":"token","refresh_token":"refresh","token_type":"Bearer"}'),
+    ]);
+    $guzzleClient = new GuzzleClient(['handler' => HandlerStack::create($mock)]);
+    $client = new GuzzleHttpClient($guzzleClient);
 
-    public function testRequestGetWithQueryParams(): void
-    {
-        $mock = new MockHandler([
-            new Response(200, [], '{"custom_id":"id-1","total_count":0,"messages":[]}'),
-        ]);
-        $handlerStack = HandlerStack::create($mock);
-        $guzzleClient = new GuzzleClient(['handler' => $handlerStack]);
-        $client = new GuzzleHttpClient($guzzleClient);
+    $result = $client->request('POST', 'auth/token', ['client_id' => 'id', 'client_secret' => 'secret']);
 
-        $result = $client->request('GET', 'messages/by-custom-id/id-1', ['custom_id' => 'id-1']);
+    expect($result['status'])->toBe(200)
+        ->and($result['body']['access_token'])->toBe('token')
+        ->and($result['body']['refresh_token'])->toBe('refresh')
+        ->and($result['body']['token_type'])->toBe('Bearer');
+});
 
-        self::assertSame(200, $result['status']);
-        self::assertSame('id-1', $result['body']['custom_id']);
-        self::assertSame(0, $result['body']['total_count']);
-    }
+it('request throws on network error', function (): void {
+    $mock = new MockHandler([
+        new ConnectException('Connection refused', new Request('POST', 'auth/token')),
+    ]);
+    $guzzleClient = new GuzzleClient(['handler' => HandlerStack::create($mock)]);
+    $client = new GuzzleHttpClient($guzzleClient);
 
-    public function testRequestReturnsEmptyArrayWhenResponseBodyIsNullJson(): void
-    {
-        $mock = new MockHandler([
-            new Response(200, [], 'null'),
-        ]);
-        $handlerStack = HandlerStack::create($mock);
-        $guzzleClient = new GuzzleClient(['handler' => $handlerStack]);
-        $client = new GuzzleHttpClient($guzzleClient);
+    expect(fn (): array => $client->request('POST', 'auth/token'))
+        ->toThrow(GoSmsRequestException::class, 'Network error: Connection refused');
+});
 
-        $result = $client->request('GET', 'messages');
+it('request throws on invalid json', function (): void {
+    $mock = new MockHandler([new Response(200, [], 'invalid json')]);
+    $guzzleClient = new GuzzleClient(['handler' => HandlerStack::create($mock)]);
+    $client = new GuzzleHttpClient($guzzleClient);
 
-        self::assertSame(200, $result['status']);
-        self::assertSame([], $result['body']);
-    }
+    expect(fn (): array => $client->request('GET', 'messages'))->toThrow(JsonException::class);
+});
 
-}
+it('request get with query params', function (): void {
+    $mock = new MockHandler([
+        new Response(200, [], '{"custom_id":"id-1","total_count":0,"messages":[]}'),
+    ]);
+    $guzzleClient = new GuzzleClient(['handler' => HandlerStack::create($mock)]);
+    $client = new GuzzleHttpClient($guzzleClient);
+
+    $result = $client->request('GET', 'messages/by-custom-id/id-1', ['custom_id' => 'id-1']);
+
+    expect($result['status'])->toBe(200)
+        ->and($result['body']['custom_id'])->toBe('id-1')
+        ->and($result['body']['total_count'])->toBe(0);
+});
+
+it('request returns empty array when response body is null json', function (): void {
+    $mock = new MockHandler([new Response(200, [], 'null')]);
+    $guzzleClient = new GuzzleClient(['handler' => HandlerStack::create($mock)]);
+    $client = new GuzzleHttpClient($guzzleClient);
+
+    $result = $client->request('GET', 'messages');
+
+    expect($result['status'])->toBe(200)->and($result['body'])->toBe([]);
+});
