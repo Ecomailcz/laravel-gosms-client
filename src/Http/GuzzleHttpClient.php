@@ -13,6 +13,7 @@ final readonly class GuzzleHttpClient implements HttpClient
 {
 
     private const string API_URL = 'https://api.gosms.eu/api/v2/';
+
     private const int TIMEOUT = 30;
 
     public function __construct(private GuzzleClient $guzzleClient = new GuzzleClient(['base_uri' => self::API_URL, 'timeout' => self::TIMEOUT]))
@@ -23,6 +24,7 @@ final readonly class GuzzleHttpClient implements HttpClient
      * @param array<string, mixed> $data
      * @param array<string, string> $headers
      * @return array{body: array<string, mixed>, status: int}
+     * @throws \EcomailGoSms\Exceptions\Request|\JsonException
      */
     public function request(string $method, string $uri, array $data = [], array $headers = []): array
     {

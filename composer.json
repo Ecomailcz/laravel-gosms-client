@@ -19,22 +19,25 @@
         }
     ],
     "require": {
-        "php": "^8.4",
-        "giggsey/libphonenumber-for-php-lite": "^8.13.29 || ^9.0.15",
+        "php": "^8.4|^8.5",
+        "giggsey/libphonenumber-for-php-lite": "^8.13.29 || ^9.0.23",
         "guzzlehttp/guzzle": "^7.10.0",
         "illuminate/support": "^9.0 || ^10.0 || ^11.0",
-        "spatie/laravel-data": "^4.17"
+        "spatie/laravel-data": "^4.19.1"
     },
     "require-dev": {
-        "ergebnis/composer-normalize": "^2.48.2",
-        "laravel/pint": "^1.25.1",
-        "orchestra/testbench": "^7.0 || ^8.36",
-        "pekral/phpcs-rules": "^0.4.2",
-        "pekral/phpstan-rules": "^0.4.2",
-        "pekral/rector-rules": "^0.4.2",
+        "ergebnis/composer-normalize": "^2.49.0",
+        "laravel/pint": "^1.27.0",
+        "orchestra/testbench": "^7.0 || ^8.37",
+        "pekral/cursor-rules": ">=0.3",
+        "pekral/phpcs-rules": "^0.4.6",
+        "pekral/phpstan-rules": "^0.4.5",
+        "pekral/rector-rules": "^0.4.7",
+        "pestphp/pest": ">=2.36.1",
+        "pestphp/pest-plugin-laravel": ">=2.4",
         "phpstan/phpstan-deprecation-rules": ">=2.0.3",
-        "phpstan/phpstan-phpunit": "^2.0.7",
-        "phpunit/phpunit": "^10.5",
+        "phpstan/phpstan-phpunit": "^2.0.12",
+        "phpunit/phpunit": "^10.5.63",
         "roave/security-advisories": "dev-latest"
     },
     "minimum-stability": "dev",
@@ -53,6 +56,7 @@
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true,
             "ergebnis/composer-normalize": true,
+            "pestphp/pest-plugin": true,
             "phpstan/extension-installer": true
         },
         "bump-after-update": true,
@@ -75,6 +79,10 @@
             "echo \"🔍 Running PHPStan static analysis...\"",
             "vendor/bin/phpstan analyse --memory-limit=2G"
         ],
+        "build": [
+            "echo \"Building package...\"",
+            "composer cursor-rules-refresh && composer fix && composer check"
+        ],
         "check": [
             "echo \"🚀 Running full quality check...\"",
             "@normalize-check",
@@ -83,12 +91,16 @@
             "@rector-check",
             "@analyse",
             "@security-audit",
-            "@test",
+            "@coverage",
             "echo \"✅ All checks completed!\""
         ],
         "coverage": [
             "echo \"📊 Running code coverage analysis...\"",
             "@test:coverage"
+        ],
+        "cursor-rules-refresh": [
+            "echo \"Refresh cursor rules...\"",
+            "vendor/bin/cursor-rules install --force"
         ],
         "fix": [
             "echo \"🔧 Running all fixes...\"",
@@ -108,19 +120,19 @@
         ],
         "phpcs-check": [
             "echo \"✅ Running PHP CodeSniffer check...\"",
-            "vendor/bin/phpcs --standard=ruleset.xml src/ tests/ check-coverage.php"
+            "vendor/bin/phpcs --standard=ruleset.xml src/ tests/"
         ],
         "phpcs-fix": [
             "echo \"🔧 Running PHP CodeSniffer fix...\"",
-            "vendor/bin/phpcbf --standard=ruleset.xml src/ tests/ check-coverage.php || true"
+            "vendor/bin/phpcbf --standard=ruleset.xml src/ tests/ || true"
         ],
         "pint-check": [
             "echo \"🎨 Running Laravel Pint check...\"",
-            "vendor/bin/pint src/ tests/ check-coverage.php --test"
+            "vendor/bin/pint src/ tests/ --test"
         ],
         "pint-fix": [
             "echo \"🎨 Running Laravel Pint fixes...\"",
-            "vendor/bin/pint src/ tests/ check-coverage.php"
+            "vendor/bin/pint src/ tests/"
         ],
         "rector-check": [
             "echo \"🔄 Running Rector check (dry-run)...\"",
@@ -136,12 +148,11 @@
         ],
         "test": [
             "echo \"🧪 Running tests...\"",
-            "vendor/bin/phpunit --no-coverage"
+            "vendor/bin/pest --no-coverage"
         ],
         "test:coverage": [
             "echo \"📊 Running coverage tests with 100% minimum...\"",
-            "php -dpcov.enabled=1 -dpcov.directory=src/ -dxdebug.mode=off vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-html=coverage-html --coverage-text",
-            "php check-coverage.php"
+            "php -dpcov.enabled=1 -dpcov.directory=src/Laravel/ -dxdebug.mode=off vendor/bin/pest -c phpunit.coverage.xml --coverage --min=100 --coverage-clover=coverage.xml --coverage-html=coverage-html --coverage-text"
         ]
     }
 }

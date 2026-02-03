@@ -37,8 +37,10 @@ final class Client
     public function authenticate(): self
     {
         $authRequest = new AuthRequest($this->clientId, $this->clientSecret);
-        
-        $response = $this->httpClient->request('POST', 'oauth/token', $authRequest->toArray());
+
+        /** @var array<string, mixed> $data */
+        $data = $authRequest->toArray();
+        $response = $this->httpClient->request('POST', 'oauth/token', $data);
 
         if ($response['status'] !== 200) {
             throw Authorization::authenticationFailed();
@@ -70,10 +72,12 @@ final class Client
 
         $smsRequest = new SmsRequest($phoneNumber, $message, $channel ?? $this->defaultChannel);
 
+        /** @var array<string, mixed> $data */
+        $data = $smsRequest->toArray();
         $response = $this->httpClient->request(
             'POST',
             'messages/sms',
-            $smsRequest->toArray(),
+            $data,
             $this->getAuthHeaders(),
         );
 
@@ -100,10 +104,12 @@ final class Client
 
         $bulkRequest = new BulkSmsRequest($phoneNumbers, $message, $channel ?? $this->defaultChannel);
 
+        /** @var array<string, mixed> $data */
+        $data = $bulkRequest->toArray();
         $response = $this->httpClient->request(
             'POST',
             'messages/sms/bulk',
-            $bulkRequest->toArray(),
+            $data,
             $this->getAuthHeaders(),
         );
 
