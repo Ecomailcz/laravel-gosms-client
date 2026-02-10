@@ -12,6 +12,7 @@ const TOKEN_CACHE_FILE = __DIR__ . '/.gosms-token-cache.json';
 
 /**
  * @return array{access_token: string, refresh_token: string}|null
+ * @throws \JsonException
  */
 function loadTokenFromCache(): ?array
 {
@@ -42,6 +43,7 @@ function loadTokenFromCache(): ?array
 
 /**
  * @param array{access_token: string, refresh_token: string} $token
+ * @throws \JsonException
  */
 function saveTokenToCache(array $token): void
 {
@@ -52,6 +54,13 @@ function saveTokenToCache(array $token): void
     );
 }
 
+/**
+ * @throws \EcomailGoSms\Exceptions\BadRequest
+ * @throws \Throwable
+ * @throws \EcomailGoSms\Exceptions\InvalidResponseData
+ * @throws \Illuminate\Contracts\Container\BindingResolutionException
+ * @throws \JsonException
+ */
 function getClientWithCachedToken(): LaravelGoSmsClient
 {
     $clientId = is_string($_ENV['GOSMS_CLIENT_ID'] ?? null) ? $_ENV['GOSMS_CLIENT_ID'] : '';
