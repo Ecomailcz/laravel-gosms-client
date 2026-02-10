@@ -47,7 +47,7 @@
         "pestphp/pest-plugin-laravel": "^4",
         "phpstan/phpstan-deprecation-rules": ">=2.0.3",
         "phpstan/phpstan-mockery": "^2.0",
-        "phpstan/phpstan-phpunit": "^2.0.13",
+        "phpstan/phpstan-phpunit": "^2.0.14",
         "roave/security-advisories": "dev-latest"
     },
     "minimum-stability": "dev",
