@@ -47,7 +47,7 @@ function saveTokenToCache(array $token): void
 {
     file_put_contents(
         TOKEN_CACHE_FILE,
-        json_encode($token, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT),
+        json_encode($token, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR),
         LOCK_EX,
     );
 }
@@ -163,7 +163,7 @@ foreach ($response->getAccepted() as $sent) {
                     $display = match (true) {
                         $value === null => 'null',
                         is_scalar($value) => (string) $value,
-                        default => json_encode($value, JSON_UNESCAPED_UNICODE),
+                        default => json_encode($value, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
                     };
                     echo '  ' . $key . ': ' . $display . "\n";
                 }
