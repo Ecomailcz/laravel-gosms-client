@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-use EcomailGoSms\GoSmsClient;
+use EcomailGoSms\LaravelGoSmsClient;
 use EcomailGoSms\Message;
 use GuzzleHttp\Client as GuzzleClient;
 
@@ -52,7 +52,7 @@ function saveTokenToCache(array $token): void
     );
 }
 
-function getClientWithCachedToken(): GoSmsClient
+function getClientWithCachedToken(): LaravelGoSmsClient
 {
     $clientId = is_string($_ENV['GOSMS_CLIENT_ID'] ?? null) ? $_ENV['GOSMS_CLIENT_ID'] : '';
     $clientSecret = is_string($_ENV['GOSMS_CLIENT_SECRET'] ?? null) ? $_ENV['GOSMS_CLIENT_SECRET'] : '';
@@ -68,10 +68,10 @@ function getClientWithCachedToken(): GoSmsClient
     $cached = loadTokenFromCache();
 
     if ($cached !== null) {
-        return new GoSmsClient($clientId, $clientSecret, $cached['access_token'], $channelId, 'password', '', $httpClient);
+        return new LaravelGoSmsClient($clientId, $clientSecret, $cached['access_token'], $channelId, 'password', '', $httpClient);
     }
 
-    $baseClient = new GoSmsClient($clientId, $clientSecret, null, $channelId, 'password', '', $httpClient);
+    $baseClient = new LaravelGoSmsClient($clientId, $clientSecret, null, $channelId, 'password', '', $httpClient);
 
     $auth = $baseClient->authenticate();
     saveTokenToCache([
@@ -79,7 +79,7 @@ function getClientWithCachedToken(): GoSmsClient
         'refresh_token' => $auth->getRefreshToken(),
     ]);
 
-    return new GoSmsClient(
+    return new LaravelGoSmsClient(
         $clientId,
         $clientSecret,
         $auth->getAccessToken(),

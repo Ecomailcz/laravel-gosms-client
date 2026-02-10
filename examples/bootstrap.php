@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-use EcomailGoSms\GoSmsClient;
+use EcomailGoSms\LaravelGoSmsClient;
 use Illuminate\Foundation\Application;
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -52,7 +52,7 @@ function getApplication(): Application
     return $app;
 }
 
-function getAuthenticatedClient(): GoSmsClient
+function getAuthenticatedClient(): LaravelGoSmsClient
 {
     $clientId = $_ENV['GOSMS_CLIENT_ID'] ?? '';
     $clientSecret = $_ENV['GOSMS_CLIENT_SECRET'] ?? '';
@@ -63,7 +63,7 @@ function getAuthenticatedClient(): GoSmsClient
 
     $client = getApplication()->make('gosms.authenticated');
 
-    assert($client instanceof GoSmsClient);
+    assert($client instanceof LaravelGoSmsClient);
 
     return $client;
 }

@@ -5,8 +5,8 @@ declare(strict_types = 1);
 namespace EcomailGoSms\Tests\Unit\Laravel;
 
 use EcomailGoSms\Client;
-use EcomailGoSms\GoSmsClient;
 use EcomailGoSms\Laravel\GoSmsServiceProvider;
+use EcomailGoSms\LaravelGoSmsClient;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
@@ -71,8 +71,8 @@ it('resolves client as singleton', function (): void {
     /** @var \Illuminate\Foundation\Application $app */
     $app = app();
 
-    $first = $app->make(GoSmsClient::class);
-    $second = $app->make(GoSmsClient::class);
+    $first = $app->make(LaravelGoSmsClient::class);
+    $second = $app->make(LaravelGoSmsClient::class);
 
     expect($first)->toBe($second);
 });
@@ -83,7 +83,7 @@ it('resolves alias to client', function (): void {
 
     $client = $app->make('gosms');
 
-    expect($client)->toBeInstanceOf(GoSmsClient::class);
+    expect($client)->toBeInstanceOf(LaravelGoSmsClient::class);
 });
 
 it('resolves client with default channel from config', function (): void {
