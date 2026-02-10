@@ -11,6 +11,7 @@ use EcomailGoSms\Tests\GoSmsClientTestUtility;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use Illuminate\Testing\Assert;
 use PHPUnit\Framework\TestCase;
 
 use function fake;
@@ -118,6 +119,12 @@ final class GoSmsClientTest extends TestCase
         $message = fake()->text();
         $dto = new Message($message, $channelId, $phoneNumber, $uuid);
         $client->sendMessageAsync($dto);
+    }
+
+    public function testGenerateSmsId(): void
+    {
+        $client = $this->createGoSmsClientWithAccessToken();
+        Assert::assertNotEmpty($client->generateSmsId());
     }
 
 }

@@ -8,6 +8,8 @@
 
 Laravel package for the [GoSms.cz](https://gosms.cz) API. Send single or bulk SMS, verify connection, and check message status via the `GoSms` facade.
 
+API docs: [https://api.gosms.eu/docs](https://api.gosms.eu/docs)
+
 ---
 
 ## Installation
@@ -44,16 +46,28 @@ The package auto-registers (Laravel package discovery). No provider or alias reg
 
 ```php
 use EcomailGoSms\Laravel\GoSmsFacade as GoSms;
+use EcomailGoSms\Message;
 
 // Verify connection
 GoSms::authenticate();
 
 // Send one SMS
-GoSms::sendMessageAsync('+420123456789', 'Message text');
+$message = new Message(
+    message: 'Message text',
+    channelId: 1,
+    recipient: '+420123456789',
+    customId: 'example-' . uniqid('', true),
+);
+GoSms::sendMessageAsync($message);
 
-// Send to multiple numbers (same text)
-GoSms::sendMessagesAsync(['+420123456789', '+420987654321'], 'Shared text');
+// Send to multiple numbers
+GoSms::sendMessagesAsync([
+    new Message('Shared text', 1, '+420123456789', 'batch-1'),
+    new Message('Shared text', 1, '+420987654321', 'batch-2'),
+]);
 ```
+
+Synchronous helpers were removed; use `sendMessageAsync()` or `sendMessagesAsync()`.
 
 More examples: [examples/README.md](examples/README.md).
 

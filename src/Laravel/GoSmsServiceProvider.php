@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace EcomailGoSms\Laravel;
 
 use EcomailGoSms\Client;
-use EcomailGoSms\GoSmsClient;
+use EcomailGoSms\LaravelGoSmsClient;
 use EcomailGoSms\Requests\Request;
 use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Contracts\Container\Container;
@@ -23,11 +23,10 @@ final class GoSmsServiceProvider extends ServiceProvider
             'timeout' => 10,
         ]));
 
-        $this->app->singleton(Client::class, static function (Container $app): GoSmsClient {
+        $this->app->singleton(Client::class, static function (Container $app): LaravelGoSmsClient {
             $publicKey = config()->string('gosms.client_id');
             $privateKey = config()->string('gosms.client_secret');
             $defaultChannel = config()->integer('gosms.default_channel');
-
             $httpClient = $app->make(GuzzleClient::class);
 
             /** @phpstan-ignore instanceof.alwaysTrue (binding can be overridden in tests) */
@@ -35,7 +34,7 @@ final class GoSmsServiceProvider extends ServiceProvider
                 throw new \InvalidArgumentException('Invalid HTTP client instance');
             }
 
-            return new GoSmsClient(
+            return new LaravelGoSmsClient(
                 $publicKey,
                 $privateKey,
                 null,
@@ -46,8 +45,8 @@ final class GoSmsServiceProvider extends ServiceProvider
             );
         });
 
-        $this->app->alias(Client::class, GoSmsClient::class);
-        $this->app->alias(GoSmsClient::class, 'gosms');
+        $this->app->alias(Client::class, LaravelGoSmsClient::class);
+        $this->app->alias(LaravelGoSmsClient::class, 'gosms');
     }
 
     public function boot(): void

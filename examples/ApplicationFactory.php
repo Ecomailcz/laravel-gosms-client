@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-use EcomailGoSms\GoSmsClient;
+use EcomailGoSms\LaravelGoSmsClient;
 use EcomailGoSms\Tests\TestCase;
 use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Foundation\Application;
@@ -34,12 +34,12 @@ final class ApplicationFactory extends TestCase
             $config->set('gosms.default_channel', $channelId);
         }
 
-        $app->singleton('gosms.authenticated', static function () use ($app): GoSmsClient {
-            $client = $app->make(GoSmsClient::class);
+        $app->singleton('gosms.authenticated', static function () use ($app): LaravelGoSmsClient {
+            $client = $app->make(LaravelGoSmsClient::class);
             $auth = $client->authenticate();
             $defaultChannel = config()->get('gosms.default_channel');
 
-            return new GoSmsClient(
+            return new LaravelGoSmsClient(
                 config()->string('gosms.client_id'),
                 config()->string('gosms.client_secret'),
                 $auth->getAccessToken(),

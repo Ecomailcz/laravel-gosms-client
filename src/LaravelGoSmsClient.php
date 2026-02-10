@@ -11,7 +11,9 @@ use EcomailGoSms\Responses\MessageStatusResponse;
 use EcomailGoSms\Responses\SendMessageAsyncResponse;
 use EcomailGoSms\Responses\SendMessagesAsyncResponse;
 
-final class GoSmsClient extends Client
+use function uniqid;
+
+final class LaravelGoSmsClient extends Client
 {
 
     /**
@@ -46,6 +48,11 @@ final class GoSmsClient extends Client
         $request = new MessageStatusRequest($customId);
 
         return new MessageStatusResponse($this->makeRequest($request));
+    }
+
+    public function generateSmsId(): string
+    {
+        return uniqid(more_entropy: true);
     }
 
 }

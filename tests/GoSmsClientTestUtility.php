@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace EcomailGoSms\Tests;
 
-use EcomailGoSms\GoSmsClient;
+use EcomailGoSms\LaravelGoSmsClient;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Response;
 use Mockery;
@@ -25,7 +25,7 @@ trait GoSmsClientTestUtility
         int $statusCode = 200,
         string $publicKey = 'public-key',
         string $privateKey = 'private-key',
-    ): GoSmsClient {
+    ): LaravelGoSmsClient {
         $guzzleClient = Mockery::mock(Client::class);
         $guzzleClient->allows('request')->andReturnUsing(
             static fn (): Response => new Response(
@@ -34,7 +34,7 @@ trait GoSmsClientTestUtility
             ),
         );
 
-        return new GoSmsClient($publicKey, $privateKey, httpClient: $guzzleClient);
+        return new LaravelGoSmsClient($publicKey, $privateKey, httpClient: $guzzleClient);
     }
 
     /**
@@ -59,11 +59,11 @@ trait GoSmsClientTestUtility
         Throwable $throwable,
         string $publicKey = 'public-key',
         string $privateKey = 'private-key',
-    ): GoSmsClient {
+    ): LaravelGoSmsClient {
         $guzzleClient = Mockery::mock(Client::class)->makePartial();
         $guzzleClient->allows('request')->andThrow($throwable);
 
-        return new GoSmsClient($publicKey, $privateKey, httpClient: $guzzleClient);
+        return new LaravelGoSmsClient($publicKey, $privateKey, httpClient: $guzzleClient);
     }
 
     /**
@@ -73,10 +73,10 @@ trait GoSmsClientTestUtility
         ?string $accessToken = 'test-access-token',
         string $publicKey = 'public-key',
         string $privateKey = 'private-key',
-    ): GoSmsClient {
+    ): LaravelGoSmsClient {
         $guzzleClient = Mockery::mock(Client::class);
 
-        return new GoSmsClient($publicKey, $privateKey, $accessToken, httpClient: $guzzleClient);
+        return new LaravelGoSmsClient($publicKey, $privateKey, $accessToken, httpClient: $guzzleClient);
     }
 
     /**
@@ -88,7 +88,7 @@ trait GoSmsClientTestUtility
         int $statusCode = 200,
         string $publicKey = 'public-key',
         string $privateKey = 'private-key',
-    ): GoSmsClient {
+    ): LaravelGoSmsClient {
         $guzzleClient = Mockery::mock(Client::class);
         $guzzleClient->allows('request')->andReturnUsing(
             static fn (): Response => new Response(
@@ -97,7 +97,7 @@ trait GoSmsClientTestUtility
             ),
         );
 
-        return new GoSmsClient($publicKey, $privateKey, $accessToken, httpClient: $guzzleClient);
+        return new LaravelGoSmsClient($publicKey, $privateKey, $accessToken, httpClient: $guzzleClient);
     }
 
 }

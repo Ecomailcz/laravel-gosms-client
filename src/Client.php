@@ -90,15 +90,24 @@ abstract class Client
      */
     private function buildRequestHeaders(Request $request): array
     {
-        $options = $request->getOptions();
+        return $this->applyAuthorization($request->getOptions());
+    }
 
-        if ($this->accessToken !== null) {
-            if (!isset($options['headers']) || !is_array($options['headers'])) {
-                $options['headers'] = [];
-            }
-
-            $options['headers']['Authorization'] = sprintf('Bearer %s', $this->accessToken);
+    /**
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>
+     */
+    private function applyAuthorization(array $options): array
+    {
+        if ($this->accessToken === null) {
+            return $options;
         }
+
+        if (!isset($options['headers']) || !is_array($options['headers'])) {
+            $options['headers'] = [];
+        }
+
+        $options['headers']['Authorization'] = sprintf('Bearer %s', $this->accessToken);
 
         return $options;
     }
