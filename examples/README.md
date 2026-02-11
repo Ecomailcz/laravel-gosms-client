@@ -2,7 +2,7 @@
 
 Scripts for testing API connection and sending messages via GoSMS API. Add your own keys.
 
-The client instance is resolved through Laravel’s container (Orchestra Testbench): `ApplicationFactory` creates a minimal Laravel app, registers the package’s service provider and config from `.env`, and the scripts use the authenticated client from `app('gosms.authenticated')`.
+The client instance is resolved through Laravel’s container (Orchestra Testbench): `ApplicationFactory` creates a minimal Laravel app, registers the package’s service provider and config from `.env`, and the scripts use the authenticated client returned by `authenticate()` via `app('gosms.authenticated')`.
 
 ## Setup
 

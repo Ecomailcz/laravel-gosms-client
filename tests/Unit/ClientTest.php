@@ -56,9 +56,10 @@ final class ClientTest extends TestCase
     public function testAuthenticate(): void
     {
         $client = $this->createGoSmsClientWithJsonResponse(__DIR__ . '/../Fixtures/authenticate.json');
-        $response = $client->authenticate();
+        $authenticated = $client->authenticate();
 
-        self::assertSame('string', $response->getAccessToken());
+        self::assertSame($client, $authenticated);
+        self::assertSame('string', $authenticated->getAccessToken());
     }
 
     public function testAuthenticateBadRequest(): void
@@ -122,9 +123,10 @@ final class ClientTest extends TestCase
     {
         $client = $this->createGoSmsClientWithJsonResponseAndAccessToken(__DIR__ . '/../Fixtures/authenticate.json', 'existing-token');
 
-        $response = $client->authenticate();
+        $authenticated = $client->authenticate();
 
-        self::assertSame('string', $response->getAccessToken());
+        self::assertSame($client, $authenticated);
+        self::assertSame('string', $authenticated->getAccessToken());
     }
 
     public function testGetAccessTokenWithToken(): void

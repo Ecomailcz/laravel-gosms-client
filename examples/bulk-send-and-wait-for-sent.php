@@ -2,16 +2,22 @@
 
 declare(strict_types = 1);
 
+use EcomailGoSms\Exceptions\UnauthorizedRequest;
 use EcomailGoSms\LaravelGoSmsClient;
 use EcomailGoSms\Message;
+use EcomailGoSms\Responses\MessageStatusResponse;
 use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\Exception\ClientException;
 
 require __DIR__ . '/bootstrap.php';
 
 const TOKEN_CACHE_FILE = __DIR__ . '/.gosms-token-cache.json';
 
 /**
- * @return array{access_token: string, refresh_token: string}|null
+ * @return array{
+ *     access_token: string,
+ *     refresh_token: string
+ * }|null
  * @throws \JsonException
  */
 function loadTokenFromCache(): ?array
@@ -42,7 +48,10 @@ function loadTokenFromCache(): ?array
 }
 
 /**
- * @param array{access_token: string, refresh_token: string} $token
+ * @param array{
+ *     access_token: string,
+ *     refresh_token: string
+ * } $token
  * @throws \JsonException
  */
 function saveTokenToCache(array $token): void
@@ -52,6 +61,40 @@ function saveTokenToCache(array $token): void
         json_encode($token, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR),
         LOCK_EX,
     );
+}
+
+/**
+ * @throws \EcomailGoSms\Exceptions\BadRequest
+ * @throws \EcomailGoSms\Exceptions\InvalidResponseData
+ * @throws \Throwable
+ * @throws \JsonException
+ */
+function authenticateClient(LaravelGoSmsClient $client): void
+{
+    $client->authenticate();
+    $accessToken = $client->getAccessToken();
+
+    saveTokenToCache([
+        'access_token' => $accessToken ?? '',
+        'refresh_token' => '',
+    ]);
+}
+
+/**
+ * @throws \EcomailGoSms\Exceptions\BadRequest
+ * @throws \EcomailGoSms\Exceptions\InvalidResponseData
+ * @throws \Throwable
+ * @throws \JsonException
+ */
+function getMessageStatusWithRetry(LaravelGoSmsClient $client, string $customId): MessageStatusResponse
+{
+    try {
+        return $client->getMessageStatistics($customId);
+    } catch (UnauthorizedRequest) {
+        authenticateClient($client);
+
+        return $client->getMessageStatistics($customId);
+    }
 }
 
 /**
@@ -80,23 +123,10 @@ function getClientWithCachedToken(): LaravelGoSmsClient
         return new LaravelGoSmsClient($clientId, $clientSecret, $cached['access_token'], $channelId, 'password', '', $httpClient);
     }
 
-    $baseClient = new LaravelGoSmsClient($clientId, $clientSecret, null, $channelId, 'password', '', $httpClient);
+    $client = new LaravelGoSmsClient($clientId, $clientSecret, null, $channelId, 'password', '', $httpClient);
+    authenticateClient($client);
 
-    $auth = $baseClient->authenticate();
-    saveTokenToCache([
-        'access_token' => $auth->getAccessToken(),
-        'refresh_token' => $auth->getRefreshToken(),
-    ]);
-
-    return new LaravelGoSmsClient(
-        $clientId,
-        $clientSecret,
-        $auth->getAccessToken(),
-        $channelId,
-        'password',
-        '',
-        $httpClient,
-    );
+    return $client;
 }
 
 $client = getClientWithCachedToken();
@@ -129,7 +159,12 @@ foreach ($recipients as $index => $recipient) {
     );
 }
 
-$response = $client->sendMessagesAsync($messages);
+try {
+    $response = $client->sendMessagesAsync($messages);
+} catch (UnauthorizedRequest) {
+    authenticateClient($client);
+    $response = $client->sendMessagesAsync($messages);
+}
 
 echo "Bulk send completed.\n";
 echo 'Accepted: ' . $response->getTotalAccepted() . "\n";
@@ -144,7 +179,27 @@ foreach ($response->getAccepted() as $sent) {
     $attempt = 0;
 
     while ($attempt < $maxAttempts) {
-        $statusResponse = $client->getMessageStatistics($sent->customId);
+        try {
+            $statusResponse = getMessageStatusWithRetry($client, $sent->customId);
+        } catch (ClientException $exception) {
+            $statusCode = $exception->getResponse()->getStatusCode();
+
+            if ($statusCode !== 404) {
+                throw $exception;
+            }
+
+            echo '  [' . ($attempt + 1) . "] status: not found yet\n";
+            $attempt++;
+
+            if ($attempt < $maxAttempts) {
+                sleep($pollIntervalSeconds);
+            } else {
+                echo "  Max attempts reached, stopping.\n";
+            }
+
+            continue;
+        }
+
         $statusMessages = $statusResponse->getMessages();
 
         if ($statusMessages === []) {
