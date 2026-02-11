@@ -37,12 +37,12 @@ final class MessageStatusResponseTest extends TestCase
         $messages = $response->getMessages();
 
         self::assertCount(1, $messages);
-        self::assertArrayHasKey('status', $messages[0]);
-        self::assertArrayHasKey('recipient', $messages[0]);
-        self::assertArrayHasKey('custom_id', $messages[0]);
-        self::assertArrayHasKey('created_at', $messages[0]);
-        self::assertArrayHasKey('updated_at', $messages[0]);
-        self::assertArrayHasKey('error', $messages[0]);
+        self::assertSame('processing', $messages[0]['status']);
+        self::assertSame('+420733382412', $messages[0]['recipient']);
+        self::assertSame('6953a029b6061', $messages[0]['custom_id']);
+        self::assertSame('2025-12-30T09:49:29Z', $messages[0]['created_at']);
+        self::assertSame('2025-12-30T09:49:29Z', $messages[0]['updated_at']);
+        self::assertNull($messages[0]['error']);
     }
 
     public function testValidationError(): void

@@ -62,12 +62,12 @@ final class GoSmsClientTest extends TestCase
         self::assertSame($uuid, $response->getCustomId());
         self::assertSame(1, $response->getTotalCount());
         self::assertCount(1, $response->getMessages());
-        self::assertArrayHasKey('status', $response->getMessages()[0]);
-        self::assertArrayHasKey('recipient', $response->getMessages()[0]);
-        self::assertArrayHasKey('custom_id', $response->getMessages()[0]);
-        self::assertArrayHasKey('created_at', $response->getMessages()[0]);
-        self::assertArrayHasKey('updated_at', $response->getMessages()[0]);
-        self::assertArrayHasKey('error', $response->getMessages()[0]);
+        self::assertSame('processing', $response->getMessages()[0]['status']);
+        self::assertSame('+420733382412', $response->getMessages()[0]['recipient']);
+        self::assertSame('6953a029b6061', $response->getMessages()[0]['custom_id']);
+        self::assertSame('2025-12-30T09:49:29Z', $response->getMessages()[0]['created_at']);
+        self::assertSame('2025-12-30T09:49:29Z', $response->getMessages()[0]['updated_at']);
+        self::assertNull($response->getMessages()[0]['error']);
     }
 
     public function testSendAsyncMessageWithExpectedSendStart(): void
@@ -119,6 +119,59 @@ final class GoSmsClientTest extends TestCase
         $message = fake()->text();
         $dto = new Message($message, $channelId, $phoneNumber, $uuid);
         $client->sendMessageAsync($dto);
+    }
+
+    public function testSendAsyncMessagesWithError(): void
+    {
+        $this->expectException(InvalidRequest::class);
+
+        $response = new Response(422, [], 'Error');
+        $request = new Request('POST', 'https://api.gosms.eu/api/v2/messages/bulk');
+        $exception = new ClientException('Error', $request, $response);
+        $client = $this->createGoSmsClientWithException($exception);
+        $uuid = fake()->uuid();
+        $phoneNumber = fake()->e164PhoneNumber();
+        $channelId = fake()->randomDigit();
+        $message = fake()->text();
+        $client->sendMessagesAsync([new Message($message, $channelId, $phoneNumber, $uuid)]);
+    }
+
+    public function testSendAsyncMessagesWithInvalidChannel(): void
+    {
+        $this->expectException(BadRequest::class);
+
+        $body = (string) file_get_contents(__DIR__ . '/../Fixtures/send_message_async_invalid_channel.json');
+        $response = new Response(403, [], $body);
+        $request = new Request('POST', 'https://api.gosms.eu/api/v2/messages/bulk');
+        $exception = new ClientException('Error', $request, $response);
+        $client = $this->createGoSmsClientWithException($exception);
+        $uuid = fake()->uuid();
+        $phoneNumber = fake()->e164PhoneNumber();
+        $channelId = fake()->randomDigit();
+        $message = fake()->text();
+        $client->sendMessagesAsync([new Message($message, $channelId, $phoneNumber, $uuid)]);
+    }
+
+    public function testMessageDetailWithError(): void
+    {
+        $this->expectException(InvalidRequest::class);
+
+        $response = new Response(422, [], 'Error');
+        $request = new Request('GET', 'https://api.gosms.eu/api/v2/messages/by-custom-id/test-id');
+        $exception = new ClientException('Error', $request, $response);
+        $client = $this->createGoSmsClientWithException($exception);
+        $client->getMessageStatistics('test-id');
+    }
+
+    public function testMessageDetailWithBadRequest(): void
+    {
+        $this->expectException(BadRequest::class);
+
+        $response = new Response(400, [], 'Error');
+        $request = new Request('GET', 'https://api.gosms.eu/api/v2/messages/by-custom-id/test-id');
+        $exception = new ClientException('Error', $request, $response);
+        $client = $this->createGoSmsClientWithException($exception);
+        $client->getMessageStatistics('test-id');
     }
 
     public function testGenerateSmsId(): void

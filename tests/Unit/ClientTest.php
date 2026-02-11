@@ -53,6 +53,30 @@ final class ClientTest extends TestCase
         self::assertSame('Bearer', $response->getTokenType());
     }
 
+    public function testRefreshTokenBadRequest(): void
+    {
+        $this->expectException(BadRequest::class);
+
+        $response = new Response(400, [], 'Error');
+        $request = new Request('POST', 'https://api.gosms.eu/api/v2/auth/refresh');
+        $exception = new ClientException('Error', $request, $response);
+        $client = $this->createGoSmsClientWithException($exception);
+
+        $client->refreshToken('xxxx');
+    }
+
+    public function testRefreshTokenUnauthorized(): void
+    {
+        $this->expectException(UnauthorizedRequest::class);
+
+        $response = new Response(401, [], 'Error');
+        $request = new Request('POST', 'https://api.gosms.eu/api/v2/auth/refresh');
+        $exception = new ClientException('Error', $request, $response);
+        $client = $this->createGoSmsClientWithException($exception);
+
+        $client->refreshToken('xxxx');
+    }
+
     public function testAuthenticate(): void
     {
         $client = $this->createGoSmsClientWithJsonResponse(__DIR__ . '/../Fixtures/authenticate.json');

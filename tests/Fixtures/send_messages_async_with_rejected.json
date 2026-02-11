@@ -1,0 +1,1 @@
+{"accepted":[{"status":"accepted","recipient":"+420733382412","custom_id":"6953ab3ad4eb3","link":"/api/v2/messages/by-custom-id/6953ab3ad4eb3"}],"rejected":[{"status":"rejected","recipient":"+420000000000","custom_id":"6953ab3ad4eb9","link":"/api/v2/messages/by-custom-id/6953ab3ad4eb9"}],"total_accepted":1,"total_rejected":1}
