@@ -48,8 +48,8 @@ The package auto-registers (Laravel package discovery). No provider or alias reg
 use EcomailGoSms\Laravel\GoSmsFacade as GoSms;
 use EcomailGoSms\Message;
 
-// Verify connection
-GoSms::authenticate();
+// Verify connection (returns authenticated client)
+$client = GoSms::authenticate();
 
 // Send one SMS
 $message = new Message(
@@ -58,10 +58,10 @@ $message = new Message(
     recipient: '+420123456789',
     customId: 'example-' . uniqid('', true),
 );
-GoSms::sendMessageAsync($message);
+$client->sendMessageAsync($message);
 
 // Send to multiple numbers
-GoSms::sendMessagesAsync([
+$client->sendMessagesAsync([
     new Message('Shared text', 1, '+420123456789', 'batch-1'),
     new Message('Shared text', 1, '+420987654321', 'batch-2'),
 ]);

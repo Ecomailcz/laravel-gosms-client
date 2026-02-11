@@ -54,13 +54,17 @@ abstract class Client
 
     /**
      * @throws \EcomailGoSms\Exceptions\BadRequest
+     * @throws \EcomailGoSms\Exceptions\InvalidResponseData
      * @throws \Throwable
      */
-    public function authenticate(): AuthenticationResponse
+    public function authenticate(): static
     {
         $request = new AuthenticationRequest($this->publicKey, $this->privateKey);
+        $response = new AuthenticationResponse($this->makeRequest($request));
 
-        return new AuthenticationResponse($this->makeRequest($request));
+        $this->accessToken = $response->getAccessToken();
+
+        return $this;
     }
 
     public function getAccessToken(): ?string
