@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace EcomailGoSms\Requests;
 
-use EcomailGoSms\Message;
+use EcomailGoSms\Messages\Sms;
 
 use function collect;
 
@@ -12,7 +12,7 @@ final readonly class SendMessagesAsyncRequest implements Request
 {
 
     /**
-     * @param array<\EcomailGoSms\Message> $messages
+     * @param array<\EcomailGoSms\Messages\Sms> $messages
      */
     public function __construct(private array $messages)
     {
@@ -24,7 +24,7 @@ final readonly class SendMessagesAsyncRequest implements Request
     public function getOptions(): array
     {
         $messages = collect($this->messages)
-            ->map(static fn (Message $message): array => $message->toArray());
+            ->map(static fn (Sms $message): array => $message->toArray());
 
         return [
             'json' => ['messages' => $messages->toArray()],

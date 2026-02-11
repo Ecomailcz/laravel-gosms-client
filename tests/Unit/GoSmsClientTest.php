@@ -6,7 +6,7 @@ namespace EcomailGoSms\Tests\Unit;
 
 use EcomailGoSms\Exceptions\BadRequest;
 use EcomailGoSms\Exceptions\InvalidRequest;
-use EcomailGoSms\Message;
+use EcomailGoSms\Messages\Sms;
 use EcomailGoSms\Tests\GoSmsClientTestUtility;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Request;
@@ -29,7 +29,7 @@ final class GoSmsClientTest extends TestCase
         $phoneNumber = fake()->e164PhoneNumber();
         $channelId = fake()->randomDigit();
         $message = fake()->text();
-        $dto = new Message($message, $channelId, $phoneNumber, $uuid);
+        $dto = new Sms($message, $channelId, $phoneNumber, $uuid);
         $response = $response->sendMessageAsync($dto);
 
         self::assertSame('695395e54046d', $response->getCustomId());
@@ -46,7 +46,7 @@ final class GoSmsClientTest extends TestCase
         $channelId = fake()->randomDigit();
         $message = fake()->text();
         $response = $response->sendMessagesAsync(
-            [new Message($message, $channelId, $phoneNumber, $uuid), new Message($message, $channelId, $phoneNumber, $uuid)],
+            [new Sms($message, $channelId, $phoneNumber, $uuid), new Sms($message, $channelId, $phoneNumber, $uuid)],
         );
 
         self::assertSame(2, $response->getTotalAccepted());
@@ -78,7 +78,7 @@ final class GoSmsClientTest extends TestCase
         $channelId = fake()->randomDigit();
         $message = fake()->text();
         $expectedSendStart = fake()->dateTime()->format('Y-m-d H:i:s');
-        $dto = new Message($message, $channelId, $phoneNumber, $uuid, $expectedSendStart);
+        $dto = new Sms($message, $channelId, $phoneNumber, $uuid, $expectedSendStart);
         $response = $response->sendMessageAsync($dto);
 
         self::assertSame('695395e54046d', $response->getCustomId());
@@ -100,7 +100,7 @@ final class GoSmsClientTest extends TestCase
         $phoneNumber = fake()->e164PhoneNumber();
         $channelId = fake()->randomDigit();
         $message = fake()->text();
-        $dto = new Message($message, $channelId, $phoneNumber, $uuid);
+        $dto = new Sms($message, $channelId, $phoneNumber, $uuid);
         $client->sendMessageAsync($dto);
     }
 
@@ -117,7 +117,7 @@ final class GoSmsClientTest extends TestCase
         $phoneNumber = fake()->e164PhoneNumber();
         $channelId = fake()->randomDigit();
         $message = fake()->text();
-        $dto = new Message($message, $channelId, $phoneNumber, $uuid);
+        $dto = new Sms($message, $channelId, $phoneNumber, $uuid);
         $client->sendMessageAsync($dto);
     }
 
@@ -133,7 +133,7 @@ final class GoSmsClientTest extends TestCase
         $phoneNumber = fake()->e164PhoneNumber();
         $channelId = fake()->randomDigit();
         $message = fake()->text();
-        $client->sendMessagesAsync([new Message($message, $channelId, $phoneNumber, $uuid)]);
+        $client->sendMessagesAsync([new Sms($message, $channelId, $phoneNumber, $uuid)]);
     }
 
     public function testSendAsyncMessagesWithInvalidChannel(): void
@@ -149,7 +149,7 @@ final class GoSmsClientTest extends TestCase
         $phoneNumber = fake()->e164PhoneNumber();
         $channelId = fake()->randomDigit();
         $message = fake()->text();
-        $client->sendMessagesAsync([new Message($message, $channelId, $phoneNumber, $uuid)]);
+        $client->sendMessagesAsync([new Sms($message, $channelId, $phoneNumber, $uuid)]);
     }
 
     public function testMessageDetailWithError(): void

@@ -38,6 +38,27 @@ final class RefreshAccessTokenResponseTest extends TestCase
         self::assertSame('Bearer', $response->getTokenType());
     }
 
+    public function testToArray(): void
+    {
+        $response = $this->createRefreshAccessTokenResponse();
+
+        self::assertSame([
+            'access_token' => 'string',
+            'refresh_token' => 'string',
+            'token_type' => 'Bearer',
+        ], $response->toArray());
+    }
+
+    public function testToJson(): void
+    {
+        $response = $this->createRefreshAccessTokenResponse();
+
+        self::assertSame(
+            '{"access_token":"string","refresh_token":"string","token_type":"Bearer"}',
+            $response->toJson(),
+        );
+    }
+
     public function testValidationError(): void
     {
         $response = $this->createRefreshAccessTokenInvalidResponse();

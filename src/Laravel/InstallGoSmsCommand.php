@@ -20,7 +20,6 @@ final class InstallGoSmsCommand extends Command
         $this->info('Publishing GoSms config...');
 
         $this->call('vendor:publish', [
-            '--force' => false,
             '--provider' => GoSmsServiceProvider::class,
             '--tag' => 'gosms-config',
         ]);

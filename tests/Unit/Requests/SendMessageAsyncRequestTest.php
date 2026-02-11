@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace EcomailGoSms\Tests\Unit\Requests;
 
-use EcomailGoSms\Message;
+use EcomailGoSms\Messages\Sms;
 use EcomailGoSms\Requests\SendMessageAsyncRequest;
 use PHPUnit\Framework\TestCase;
 
@@ -13,7 +13,7 @@ final class SendMessageAsyncRequestTest extends TestCase
 
     public function testGetMethod(): void
     {
-        $message = new Message('Hello', 1, '+420733382412', 'custom-id');
+        $message = new Sms('Hello', 1, '+420733382412', 'custom-id');
         $request = new SendMessageAsyncRequest($message);
 
         self::assertSame('POST', $request->getMethod());
@@ -21,7 +21,7 @@ final class SendMessageAsyncRequestTest extends TestCase
 
     public function testGetEndpoint(): void
     {
-        $message = new Message('Hello', 1, '+420733382412', 'custom-id');
+        $message = new Sms('Hello', 1, '+420733382412', 'custom-id');
         $request = new SendMessageAsyncRequest($message);
 
         self::assertSame('https://api.gosms.eu/api/v2/messages/', $request->getEndpoint());
@@ -29,7 +29,7 @@ final class SendMessageAsyncRequestTest extends TestCase
 
     public function testGetOptions(): void
     {
-        $message = new Message('Test message', 2, '+420123456789', 'uuid-123');
+        $message = new Sms('Test message', 2, '+420123456789', 'uuid-123');
         $request = new SendMessageAsyncRequest($message);
         $options = $request->getOptions();
 
@@ -46,7 +46,7 @@ final class SendMessageAsyncRequestTest extends TestCase
 
     public function testGetOptionsWithExpectedSendStart(): void
     {
-        $message = new Message('Test', 1, '+420111222333', 'id-1', '2025-01-15 10:00:00');
+        $message = new Sms('Test', 1, '+420111222333', 'id-1', '2025-01-15 10:00:00');
         $request = new SendMessageAsyncRequest($message);
         $options = $request->getOptions();
 

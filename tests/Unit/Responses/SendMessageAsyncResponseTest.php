@@ -45,6 +45,27 @@ final class SendMessageAsyncResponseTest extends TestCase
         self::assertSame('/api/v2/messages/by-custom-id/695395e54046d', $response->getLink());
     }
 
+    public function testToArray(): void
+    {
+        $response = $this->createSendMessageAsyncResponse();
+        $result = $response->toArray();
+
+        self::assertSame('accepted', $result['status']);
+        self::assertSame('+420733382412', $result['recipient']);
+        self::assertSame('695395e54046d', $result['custom_id']);
+        self::assertSame('/api/v2/messages/by-custom-id/695395e54046d', $result['link']);
+    }
+
+    public function testToJson(): void
+    {
+        $response = $this->createSendMessageAsyncResponse();
+
+        self::assertSame(
+            '{"status":"accepted","recipient":"+420733382412","custom_id":"695395e54046d","link":"\/api\/v2\/messages\/by-custom-id\/695395e54046d"}',
+            $response->toJson(),
+        );
+    }
+
     public function testValidationError(): void
     {
         $response = $this->createSendMessageAsyncInvalidResponse();

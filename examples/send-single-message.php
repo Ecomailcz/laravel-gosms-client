@@ -2,9 +2,10 @@
 
 declare(strict_types = 1);
 
-use EcomailGoSms\Message;
+use EcomailGoSms\Messages\Sms;
 
 require __DIR__ . '/bootstrap.php';
+require __DIR__ . '/helpers.php';
 
 $client = getAuthenticatedClient();
 $channelId = getChannelId();
@@ -22,7 +23,7 @@ if ($recipient === null) {
 
 ensureAllowedRecipient($recipient);
 
-$message = new Message(
+$message = new Sms(
     message: $text,
     channelId: $channelId,
     recipient: $recipient,
@@ -31,8 +32,5 @@ $message = new Message(
 
 $response = $client->sendMessageAsync($message);
 
-echo "Message sent.\n";
-echo 'Status: ' . $response->getStatus() . "\n";
-echo 'Recipient: ' . $response->getRecipient() . "\n";
-echo 'Custom ID: ' . $response->getCustomId() . "\n";
-echo 'Link: ' . $response->getLink() . "\n";
+echo "\n=== Message Sent ===\n";
+printTable([$response->toArray()]);

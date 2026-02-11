@@ -14,30 +14,26 @@ final readonly class GuzzleHttpClient
 
     private const int TIMEOUT = 30;
 
-    private GuzzleClient $guzzleClient;
+    private const array BODY_METHODS = ['POST', 'PUT', 'PATCH'];
+
+    public function __construct(private GuzzleClient $guzzleClient)
+    {
+    }
 
     /**
-     * @param array{base_uri?: string, timeout?: int}|null $config
+     * @param array{base_uri?: string, timeout?: int} $config
      */
-    public function __construct(?GuzzleClient $guzzleClient = null, ?array $config = null)
+    public static function fromConfig(array $config = []): self
     {
-        if ($guzzleClient !== null) {
-            $this->guzzleClient = $guzzleClient;
-
-            return;
-        }
-
-        $baseUri = $config !== null && isset($config['base_uri']) ? $config['base_uri'] : null;
-        $timeout = $config !== null && isset($config['timeout']) ? $config['timeout'] : null;
-
         // @phpstan-ignore cast.string
-        $baseUri ??= (string) config('gosms.base_uri', GoSmsRequest::BASE_URL . GoSmsRequest::API_PATH . '/');
+        $baseUri = $config['base_uri'] ?? (string) config('gosms.base_uri', GoSmsRequest::BASE_URL . GoSmsRequest::API_PATH . '/');
         // @phpstan-ignore cast.int
-        $timeout ??= (int) config('gosms.timeout', self::TIMEOUT);
-        $this->guzzleClient = new GuzzleClient([
+        $timeout = $config['timeout'] ?? (int) config('gosms.timeout', self::TIMEOUT);
+
+        return new self(new GuzzleClient([
             'base_uri' => $baseUri,
             'timeout' => $timeout,
-        ]);
+        ]));
     }
 
     /**
@@ -49,8 +45,7 @@ final readonly class GuzzleHttpClient
     public function request(string $method, string $uri, array $data = [], array $headers = []): array
     {
         try {
-            $options = $this->buildRequestOptions($method, $data, $headers);
-            $response = $this->guzzleClient->request($method, $uri, $options);
+            $response = $this->guzzleClient->request($method, $uri, $this->buildRequestOptions($method, $data, $headers));
 
             return [
                 'body' => $this->decodeResponseBody($response->getBody()->getContents()),
@@ -71,11 +66,8 @@ final readonly class GuzzleHttpClient
         $options = ['headers' => $headers];
 
         if ($data !== []) {
-            if (in_array(strtoupper($method), ['POST', 'PUT', 'PATCH'], true)) {
-                $options['form_params'] = $data;
-            } else {
-                $options['query'] = $data;
-            }
+            $key = in_array(strtoupper($method), self::BODY_METHODS, true) ? 'form_params' : 'query';
+            $options[$key] = $data;
         }
 
         return $options;
@@ -83,7 +75,6 @@ final readonly class GuzzleHttpClient
 
     /**
      * @return array<string, mixed>
-     * @throws \EcomailGoSms\Exceptions\Request
      * @throws \JsonException
      */
     private function decodeResponseBody(string $body): array
@@ -94,13 +85,8 @@ final readonly class GuzzleHttpClient
             return [];
         }
 
-        $result = [];
-
-        foreach ($decoded as $key => $value) {
-            $result[(string) $key] = $value;
-        }
-
-        return $result;
+        // @phpstan-ignore return.type (json_decode with assoc flag returns string keys for JSON objects)
+        return $decoded;
     }
 
 }

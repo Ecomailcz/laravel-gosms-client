@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace EcomailGoSms;
+namespace EcomailGoSms\Messages;
 
-final readonly class Message
+final readonly class Sms
 {
 
     public function __construct(

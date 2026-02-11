@@ -37,9 +37,9 @@
     },
     "require-dev": {
         "ergebnis/composer-normalize": "^2.50.0",
-        "laravel/pint": "^1.27.0",
+        "laravel/pint": "^1.27.1",
         "orchestra/testbench": "^10.9",
-        "pekral/cursor-rules": ">=0.3.1",
+        "pekral/cursor-rules": "^0.3.1",
         "pekral/phpcs-rules": "^0.4.6",
         "pekral/phpstan-rules": "^0.4.5",
         "pekral/rector-rules": "^0.4.7",

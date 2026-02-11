@@ -2,134 +2,18 @@
 
 declare(strict_types = 1);
 
-use EcomailGoSms\Exceptions\UnauthorizedRequest;
 use EcomailGoSms\LaravelGoSmsClient;
-use EcomailGoSms\Message;
-use EcomailGoSms\Responses\MessageStatusResponse;
-use GuzzleHttp\Client as GuzzleClient;
-use GuzzleHttp\Exception\ClientException;
+use EcomailGoSms\Messages\Sms;
 
 require __DIR__ . '/bootstrap.php';
+require __DIR__ . '/helpers.php';
 
-const TOKEN_CACHE_FILE = __DIR__ . '/.gosms-token-cache.json';
+$app = getApplication();
+$client = $app->make('gosms');
 
-/**
- * @return array{
- *     access_token: string,
- *     refresh_token: string
- * }|null
- * @throws \JsonException
- */
-function loadTokenFromCache(): ?array
-{
-    if (!is_readable(TOKEN_CACHE_FILE)) {
-        return null;
-    }
+assert($client instanceof LaravelGoSmsClient);
 
-    $content = file_get_contents(TOKEN_CACHE_FILE);
-
-    if ($content === false) {
-        return null;
-    }
-
-    $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
-
-    if (!is_array($data) || !isset($data['access_token']) || !is_string($data['access_token']) || $data['access_token'] === '') {
-        return null;
-    }
-
-    $refresh = $data['refresh_token'] ?? '';
-
-    if (!is_string($refresh)) {
-        $refresh = '';
-    }
-
-    return ['access_token' => $data['access_token'], 'refresh_token' => $refresh];
-}
-
-/**
- * @param array{
- *     access_token: string,
- *     refresh_token: string
- * } $token
- * @throws \JsonException
- */
-function saveTokenToCache(array $token): void
-{
-    file_put_contents(
-        TOKEN_CACHE_FILE,
-        json_encode($token, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR),
-        LOCK_EX,
-    );
-}
-
-/**
- * @throws \EcomailGoSms\Exceptions\BadRequest
- * @throws \EcomailGoSms\Exceptions\InvalidResponseData
- * @throws \Throwable
- * @throws \JsonException
- */
-function authenticateClient(LaravelGoSmsClient $client): void
-{
-    $client->authenticate();
-    $accessToken = $client->getAccessToken();
-
-    saveTokenToCache([
-        'access_token' => $accessToken ?? '',
-        'refresh_token' => '',
-    ]);
-}
-
-/**
- * @throws \EcomailGoSms\Exceptions\BadRequest
- * @throws \EcomailGoSms\Exceptions\InvalidResponseData
- * @throws \Throwable
- * @throws \JsonException
- */
-function getMessageStatusWithRetry(LaravelGoSmsClient $client, string $customId): MessageStatusResponse
-{
-    try {
-        return $client->getMessageStatistics($customId);
-    } catch (UnauthorizedRequest) {
-        authenticateClient($client);
-
-        return $client->getMessageStatistics($customId);
-    }
-}
-
-/**
- * @throws \EcomailGoSms\Exceptions\BadRequest
- * @throws \Throwable
- * @throws \EcomailGoSms\Exceptions\InvalidResponseData
- * @throws \Illuminate\Contracts\Container\BindingResolutionException
- * @throws \JsonException
- */
-function getClientWithCachedToken(): LaravelGoSmsClient
-{
-    $clientId = is_string($_ENV['GOSMS_CLIENT_ID'] ?? null) ? $_ENV['GOSMS_CLIENT_ID'] : '';
-    $clientSecret = is_string($_ENV['GOSMS_CLIENT_SECRET'] ?? null) ? $_ENV['GOSMS_CLIENT_SECRET'] : '';
-
-    if ($clientId === '' || $clientSecret === '') {
-        throw new RuntimeException('Set GOSMS_CLIENT_ID and GOSMS_CLIENT_SECRET in examples/.env (copy from .env.example)');
-    }
-
-    $app = getApplication();
-    $channelId = getChannelId();
-    $httpClient = $app->make(GuzzleClient::class);
-
-    $cached = loadTokenFromCache();
-
-    if ($cached !== null) {
-        return new LaravelGoSmsClient($clientId, $clientSecret, $cached['access_token'], $channelId, 'password', '', $httpClient);
-    }
-
-    $client = new LaravelGoSmsClient($clientId, $clientSecret, null, $channelId, 'password', '', $httpClient);
-    authenticateClient($client);
-
-    return $client;
-}
-
-$client = getClientWithCachedToken();
+$client->authenticate();
 $channelId = getChannelId();
 
 $cliArgs = $_SERVER['argv'] ?? [];
@@ -143,107 +27,39 @@ if ($recipients === []) {
     exit(1);
 }
 
-foreach ($recipients as $recipient) {
-    ensureAllowedRecipient($recipient);
+$messages = collect($recipients)->map(static fn (string $recipient): Sms => new Sms(
+    message: 'Bulk test SMS – waiting for sent status. ' . uniqid(more_entropy: true),
+    channelId: $channelId,
+    recipient: $recipient,
+    customId: uniqid(more_entropy: true),
+));
+$response = $client->sendMessagesAsync($messages->toArray());
+
+echo "\n";
+echo "=== Bulk Send Results ===\n";
+echo sprintf("  Accepted: %d\n", $response->getTotalAccepted());
+echo sprintf("  Rejected: %d\n", $response->getTotalRejected());
+
+$accepted = $response->getAccepted();
+
+if ($accepted !== []) {
+    echo "\nAccepted messages:\n";
+    printTable($accepted);
 }
 
-$batchId = 'batch-' . uniqid('', true);
-$messages = [];
+$rejected = $response->getRejected();
 
-foreach ($recipients as $index => $recipient) {
-    $messages[] = new Message(
-        message: 'Bulk test SMS – waiting for sent status.',
-        channelId: $channelId,
-        recipient: $recipient,
-        customId: $batchId . '-' . ($index + 1),
-    );
+if ($rejected !== []) {
+    echo "\nRejected messages:\n";
+    printTable($rejected);
 }
 
-try {
-    $response = $client->sendMessagesAsync($messages);
-} catch (UnauthorizedRequest) {
-    authenticateClient($client);
-    $response = $client->sendMessagesAsync($messages);
-}
+echo "\nWaiting 5 seconds for delivery...\n";
+sleep(5);
 
-echo "Bulk send completed.\n";
-echo 'Accepted: ' . $response->getTotalAccepted() . "\n";
-echo 'Rejected: ' . $response->getTotalRejected() . "\n\n";
+foreach ($accepted as $sent) {
+    $status = $client->getMessageStatistics($sent['custom_id']);
 
-$pollIntervalSeconds = 3;
-$maxAttempts = 60;
-
-foreach ($response->getAccepted() as $sent) {
-    echo 'Waiting for "sent" status for custom_id: ' . $sent->customId . ' …' . "\n";
-
-    $attempt = 0;
-
-    while ($attempt < $maxAttempts) {
-        try {
-            $statusResponse = getMessageStatusWithRetry($client, $sent->customId);
-        } catch (ClientException $exception) {
-            $statusCode = $exception->getResponse()->getStatusCode();
-
-            if ($statusCode !== 404) {
-                throw $exception;
-            }
-
-            echo '  [' . ($attempt + 1) . "] status: not found yet\n";
-            $attempt++;
-
-            if ($attempt < $maxAttempts) {
-                sleep($pollIntervalSeconds);
-            } else {
-                echo "  Max attempts reached, stopping.\n";
-            }
-
-            continue;
-        }
-
-        $statusMessages = $statusResponse->getMessages();
-
-        if ($statusMessages === []) {
-            echo "  No messages in response.\n";
-
-            break;
-        }
-
-        $first = $statusMessages[0];
-        $status = is_string($first['status'] ?? null) ? $first['status'] : '';
-
-        echo '  [' . ($attempt + 1) . '] status: ' . $status . "\n";
-
-        if ($status === 'sent') {
-            echo "\nMessage completed (sent). Response data:\n";
-            echo "--- MessageStatusResponse ---\n";
-            echo 'custom_id: ' . $statusResponse->getCustomId() . "\n";
-            echo 'total_count: ' . $statusResponse->getTotalCount() . "\n";
-            echo "\n--- messages array (each item = one message) ---\n";
-
-            foreach ($statusResponse->getMessages() as $i => $msg) {
-                echo 'messages[' . $i . "]:\n";
-
-                foreach ($msg as $key => $value) {
-                    $display = match (true) {
-                        $value === null => 'null',
-                        is_scalar($value) => (string) $value,
-                        default => json_encode($value, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
-                    };
-                    echo '  ' . $key . ': ' . $display . "\n";
-                }
-            }
-
-            echo "---\n";
-
-            break;
-        }
-
-        $attempt++;
-
-        if ($attempt < $maxAttempts) {
-            sleep($pollIntervalSeconds);
-        } else {
-            echo "  Max attempts reached, stopping.\n";
-        }
-    }
+    echo sprintf("\n=== Message Status (custom_id: %s, total: %d) ===\n", $status->getCustomId(), $status->getTotalCount());
+    printTable($status->getMessages());
 }

@@ -17,16 +17,16 @@ final class GoSmsResponseTest extends TestCase
 {
 
     #[DataProvider('jsonDataProvider')]
-    public function testBodyContentsToArray(string $jsonData, bool $shouldThrowException): void
+    public function testToArrayParsing(string $jsonData, bool $shouldThrowException): void
     {
         $responseMock = $this->createMockResponseWithJsonData($jsonData, $shouldThrowException);
         $testResponse = $this->createTestGoSmsResponse($responseMock);
         
         if ($shouldThrowException) {
             $this->expectException(InvalidResponseData::class);
-            $testResponse->testBodyContentsToArray();
+            $testResponse->toArray();
         } else {
-            $result = $testResponse->testBodyContentsToArray();
+            $result = $testResponse->toArray();
             
             if ($jsonData === 'null') {
                 self::assertEmpty($result);
@@ -92,7 +92,7 @@ final class GoSmsResponseTest extends TestCase
         }
     }
 
-    public function testBodyContentsToArrayCaching(): void
+    public function testToArrayConsistency(): void
     {
         $responseMock = Mockery::mock(ResponseInterface::class);
         $bodyMock = Mockery::mock(StreamInterface::class);
@@ -102,8 +102,8 @@ final class GoSmsResponseTest extends TestCase
         
         $testResponse = new TestGoSmsResponse($responseMock);
 
-        $result1 = $testResponse->testBodyContentsToArray();
-        $result2 = $testResponse->testBodyContentsToArray();
+        $result1 = $testResponse->toArray();
+        $result2 = $testResponse->toArray();
         
         self::assertSame($result1, $result2);
         self::assertSame('value', $result1['key']);
@@ -116,6 +116,30 @@ final class GoSmsResponseTest extends TestCase
         $testResponse = $this->createTestGoSmsResponse($responseMock);
 
         self::assertSame($responseMock, $testResponse->getResponse());
+    }
+
+    public function testJsonSerializeDelegatesToArray(): void
+    {
+        $responseMock = $this->createMockResponseWithJsonData('{"key": "value"}');
+        $testResponse = $this->createTestGoSmsResponse($responseMock);
+
+        self::assertSame(['key' => 'value'], $testResponse->jsonSerialize());
+    }
+
+    public function testToArray(): void
+    {
+        $responseMock = $this->createMockResponseWithJsonData('{"key": "value", "number": 123}');
+        $testResponse = $this->createTestGoSmsResponse($responseMock);
+
+        self::assertSame(['key' => 'value', 'number' => 123], $testResponse->toArray());
+    }
+
+    public function testToJson(): void
+    {
+        $responseMock = $this->createMockResponseWithJsonData('{"key": "value", "number": 123}');
+        $testResponse = $this->createTestGoSmsResponse($responseMock);
+
+        self::assertSame('{"key":"value","number":123}', $testResponse->toJson());
     }
 
     /**
@@ -192,15 +216,6 @@ final class GoSmsResponseTest extends TestCase
  */
 final class TestGoSmsResponse extends GoSmsResponse
 {
-
-    /**
-     * @return array<string, mixed>
-     * @throws \EcomailGoSms\Exceptions\InvalidResponseData
-     */
-    public function testBodyContentsToArray(): array
-    {
-        return $this->bodyContentsToArray();
-    }
 
     /**
      * @throws \EcomailGoSms\Exceptions\InvalidResponseData

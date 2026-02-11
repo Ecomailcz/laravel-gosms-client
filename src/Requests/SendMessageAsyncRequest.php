@@ -4,12 +4,12 @@ declare(strict_types = 1);
 
 namespace EcomailGoSms\Requests;
 
-use EcomailGoSms\Message;
+use EcomailGoSms\Messages\Sms;
 
 final readonly class SendMessageAsyncRequest implements Request
 {
 
-    public function __construct(private Message $message)
+    public function __construct(private Sms $message)
     {
     }
 

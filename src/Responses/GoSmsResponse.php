@@ -6,9 +6,9 @@ namespace EcomailGoSms\Responses;
 
 use EcomailGoSms\Exceptions\InvalidResponseData;
 use JsonException;
+use JsonSerializable;
 use Psr\Http\Message\ResponseInterface;
 
-use function assert;
 use function gettype;
 use function is_array;
 use function is_int;
@@ -17,7 +17,7 @@ use function json_decode;
 use function json_encode;
 use function sprintf;
 
-abstract class GoSmsResponse
+abstract class GoSmsResponse implements JsonSerializable
 {
 
     private readonly string $responseBody;
@@ -27,72 +27,67 @@ abstract class GoSmsResponse
         $this->responseBody = $response->getBody()->getContents();
     }
 
-    public function getResponse(): ResponseInterface
+    /**
+     * @return array<string, mixed>
+     * @throws \EcomailGoSms\Exceptions\InvalidResponseData
+     */
+    public function toArray(): array
     {
-        return $this->response;
+        return $this->decodeResponseBody();
+    }
+
+    /**
+     * @throws \EcomailGoSms\Exceptions\InvalidResponseData
+     * @throws \JsonException
+     */
+    public function toJson(): string
+    {
+        return json_encode($this->toArray(), JSON_THROW_ON_ERROR);
     }
 
     /**
      * @return array<string, mixed>
      * @throws \EcomailGoSms\Exceptions\InvalidResponseData
      */
-    protected function bodyContentsToArray(): array
+    public function jsonSerialize(): array
     {
-        try {
-            /** @var array<string, mixed>|null $decoded */
-            $decoded = json_decode($this->responseBody, true, 512, JSON_THROW_ON_ERROR);
+        return $this->toArray();
+    }
 
-            if (!is_array($decoded)) {
-                return [];
-            }
-
-            return $decoded;
-        } catch (JsonException) {
-            throw new InvalidResponseData($this->response);
-        }
+    public function getResponse(): ResponseInterface
+    {
+        return $this->response;
     }
 
     /**
      * @throws \EcomailGoSms\Exceptions\InvalidResponseData
+     * @throws \JsonException
      */
     protected function getStringByKey(string $key): string
     {
-        $value = $this->getDataByKey($key);
-
-        if (!is_string($value)) {
-            throw new InvalidResponseData($this->response, message: $this->getAssertDescription($key, $value));
-        }
-
-        return $value;
+        // @phpstan-ignore return.type (validated by callable)
+        return $this->getValueByKey($key, is_string(...));
     }
 
     /**
      * @throws \EcomailGoSms\Exceptions\InvalidResponseData
+     * @throws \JsonException
      */
     protected function getIntegerByKey(string $key): int
     {
-        $value = $this->getDataByKey($key);
-
-        if (!is_int($value)) {
-            throw new InvalidResponseData($this->response, message: $this->getAssertDescription($key, $value));
-        }
-
-        return $value;
+        // @phpstan-ignore return.type (validated by callable)
+        return $this->getValueByKey($key, is_int(...));
     }
 
     /**
-     * @return array<mixed, mixed>
+     * @return array<string|int, mixed>
      * @throws \EcomailGoSms\Exceptions\InvalidResponseData
+     * @throws \JsonException
      */
     protected function getArrayByKey(string $key): array
     {
-        $value = $this->getDataByKey($key);
-
-        if (!is_array($value)) {
-            throw new InvalidResponseData($this->response, message: $this->getAssertDescription($key, $value));
-        }
-
-        return $value;
+        // @phpstan-ignore return.type (validated by callable)
+        return $this->getValueByKey($key, is_array(...));
     }
 
     /**
@@ -100,26 +95,50 @@ abstract class GoSmsResponse
      */
     protected function getDataByKey(string $key): mixed
     {
-        $data = $this->bodyContentsToArray();
+        return $this->decodeResponseBody()[$key] ?? null;
+    }
 
-        $value = $data[$key] ?? null;
-        assert($value === null || is_bool($value) || is_float($value) || is_int($value) || is_string($value) || is_array($value));
+    /**
+     * @param callable(mixed): bool $typeCheck
+     * @throws \EcomailGoSms\Exceptions\InvalidResponseData
+     * @throws \JsonException
+     */
+    private function getValueByKey(string $key, callable $typeCheck): mixed
+    {
+        $value = $this->getDataByKey($key);
+
+        if (!$typeCheck($value)) {
+            throw new InvalidResponseData($this->response, message: $this->formatInvalidDataMessage($key, $value));
+        }
 
         return $value;
     }
 
     /**
+     * @return array<string, mixed>
+     * @throws \EcomailGoSms\Exceptions\InvalidResponseData
+     */
+    private function decodeResponseBody(): array
+    {
+        try {
+            /** @var array<string, mixed>|null $decoded */
+            $decoded = json_decode($this->responseBody, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            throw new InvalidResponseData($this->response);
+        }
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    /**
      * @throws \JsonException
      */
-    private function getAssertDescription(string $key, mixed $value): string
+    private function formatInvalidDataMessage(string $key, mixed $value): string
     {
-        $valueForReport = is_array($value) ? json_encode($value, JSON_THROW_ON_ERROR) : $value;
-        $formattedValue = is_scalar($valueForReport) ? (string) $valueForReport : json_encode($valueForReport, JSON_THROW_ON_ERROR);
-
         return sprintf(
             'Invalid response data for key %s. Value is %s with type %s',
             $key,
-            $formattedValue,
+            json_encode($value, JSON_THROW_ON_ERROR),
             gettype($value),
         );
     }

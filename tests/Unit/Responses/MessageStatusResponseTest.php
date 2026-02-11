@@ -11,6 +11,9 @@ use Mockery;
 use PHPUnit\Framework\TestCase;
 
 use function file_get_contents;
+use function json_decode;
+
+use const JSON_THROW_ON_ERROR;
 
 final class MessageStatusResponseTest extends TestCase
 {
@@ -43,6 +46,34 @@ final class MessageStatusResponseTest extends TestCase
         self::assertSame('2025-12-30T09:49:29Z', $messages[0]['created_at']);
         self::assertSame('2025-12-30T09:49:29Z', $messages[0]['updated_at']);
         self::assertNull($messages[0]['error']);
+    }
+
+    public function testToArray(): void
+    {
+        $response = $this->createMessageStatusResponse();
+        $result = $response->toArray();
+
+        /** @var array<int, array<string, mixed>> $messages */
+        $messages = $result['messages'];
+
+        self::assertSame('6953a029b6061', $result['custom_id']);
+        self::assertSame(1, $result['total_count']);
+        self::assertCount(1, $messages);
+        self::assertSame('processing', $messages[0]['status']);
+    }
+
+    public function testToJson(): void
+    {
+        $response = $this->createMessageStatusResponse();
+        $json = $response->toJson();
+
+        /** @var array<string, mixed> $decoded */
+        $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('6953a029b6061', $decoded['custom_id']);
+        self::assertSame(1, $decoded['total_count']);
+        self::assertIsArray($decoded['messages']);
+        self::assertCount(1, $decoded['messages']);
     }
 
     public function testValidationError(): void

@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace EcomailGoSms;
 
+use EcomailGoSms\Messages\Sms;
 use EcomailGoSms\Requests\MessageStatusRequest;
 use EcomailGoSms\Requests\SendMessageAsyncRequest;
 use EcomailGoSms\Requests\SendMessagesAsyncRequest;
@@ -20,7 +21,7 @@ final class LaravelGoSmsClient extends Client
      * @throws \EcomailGoSms\Exceptions\BadRequest
      * @throws \Throwable
      */
-    public function sendMessageAsync(Message $message): SendMessageAsyncResponse
+    public function sendMessageAsync(Sms $message): SendMessageAsyncResponse
     {
         $request = new SendMessageAsyncRequest($message);
 
@@ -28,7 +29,7 @@ final class LaravelGoSmsClient extends Client
     }
 
     /**
-     * @param array<\EcomailGoSms\Message> $messages
+     * @param array<\EcomailGoSms\Messages\Sms> $messages
      * @throws \EcomailGoSms\Exceptions\BadRequest
      * @throws \Throwable
      */

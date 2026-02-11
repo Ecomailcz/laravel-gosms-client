@@ -4,41 +4,32 @@ declare(strict_types = 1);
 
 namespace EcomailGoSms\Responses;
 
-use EcomailGoSms\SentMessage;
-
-use function collect;
-
 final class SendMessagesAsyncResponse extends GoSmsResponse
 {
 
     /**
-     * @return array<\EcomailGoSms\SentMessage>
      * @throws \EcomailGoSms\Exceptions\InvalidResponseData
+     * @throws \JsonException
+     * @return array<int|string, mixed>
      */
     public function getAccepted(): array
     {
-        /** @phpstan-ignore-next-line */
-        return collect($this->getArrayByKey('accepted'))
-            /** @phpstan-ignore-next-line */
-            ->map(static fn (array $message): SentMessage => SentMessage::fromArray($message))
-            ->toArray();
+        return $this->getArrayByKey('accepted');
     }
 
     /**
-     * @return array<\EcomailGoSms\SentMessage>
      * @throws \EcomailGoSms\Exceptions\InvalidResponseData
+     * @throws \JsonException
+     * @return array<int|string, mixed>
      */
     public function getRejected(): array
     {
-        /** @phpstan-ignore-next-line */
-        return collect($this->getArrayByKey('rejected'))
-            /** @phpstan-ignore-next-line */
-            ->map(static fn (array $message): SentMessage => SentMessage::fromArray($message))
-            ->toArray();
+        return $this->getArrayByKey('rejected');
     }
 
     /**
      * @throws \EcomailGoSms\Exceptions\InvalidResponseData
+     * @throws \JsonException
      */
     public function getTotalAccepted(): int
     {
@@ -47,6 +38,7 @@ final class SendMessagesAsyncResponse extends GoSmsResponse
 
     /**
      * @throws \EcomailGoSms\Exceptions\InvalidResponseData
+     * @throws \JsonException
      */
     public function getTotalRejected(): int
     {
