@@ -85,84 +85,26 @@
         }
     },
     "scripts": {
-        "analyse": [
-            "echo \"🔍 Running PHPStan static analysis...\"",
-            "vendor/bin/phpstan analyse --memory-limit=2G"
+        "post-update-cmd": [
+            "@composer outdated -D"
         ],
-        "build": [
-            "echo \"Building package...\"",
-            "composer cursor-rules-refresh && composer dump-autoload && composer fix && composer check"
-        ],
-        "check": [
-            "echo \"🚀 Running full quality check...\"",
-            "@normalize-check",
-            "@phpcs-check",
-            "@pint-check",
-            "@rector-check",
-            "@analyse",
-            "@security-audit",
-            "@coverage",
-            "echo \"✅ All checks completed!\""
-        ],
-        "coverage": [
-            "echo \"📊 Running code coverage analysis...\"",
-            "@test:coverage"
-        ],
-        "cursor-rules-refresh": [
-            "echo \"Refresh cursor rules...\"",
-            "vendor/bin/cursor-rules install --force"
-        ],
-        "fix": [
-            "echo \"🔧 Running all fixes...\"",
-            "@normalize-fix",
-            "@rector-fix",
-            "@pint-fix",
-            "@phpcs-fix",
-            "echo \"✅ All fixes completed!\""
-        ],
-        "normalize-check": [
-            "echo \"📝 Checking Composer normalize...\"",
-            "composer normalize --dry-run"
-        ],
-        "normalize-fix": [
-            "echo \"📝 Running Composer normalize fix...\"",
-            "composer normalize"
-        ],
-        "phpcs-check": [
-            "echo \"✅ Running PHP CodeSniffer check...\"",
-            "vendor/bin/phpcs --standard=ruleset.xml src/ tests/ examples/"
-        ],
-        "phpcs-fix": [
-            "echo \"🔧 Running PHP CodeSniffer fix...\"",
-            "vendor/bin/phpcbf --standard=ruleset.xml src/ tests/ examples/ || true"
-        ],
-        "pint-check": [
-            "echo \"🎨 Running Laravel Pint check...\"",
-            "vendor/bin/pint src/ tests/ examples/ --test"
-        ],
-        "pint-fix": [
-            "echo \"🎨 Running Laravel Pint fixes...\"",
-            "vendor/bin/pint src/ tests/ examples/"
-        ],
-        "rector-check": [
-            "echo \"🔄 Running Rector check (dry-run)...\"",
-            "vendor/bin/rector process --dry-run"
-        ],
-        "rector-fix": [
-            "echo \"🔄 Running Rector fixes...\"",
-            "vendor/bin/rector process"
-        ],
-        "security-audit": [
-            "echo \"🔒 Running Composer security audit...\"",
-            "composer audit --format=summary"
-        ],
-        "test": [
-            "echo \"🧪 Running tests...\"",
-            "vendor/bin/pest --no-coverage"
-        ],
-        "test:coverage": [
-            "echo \"📊 Running coverage tests with 100% minimum...\"",
-            "php -dpcov.enabled=1 -dpcov.directory=src/ -dxdebug.mode=off vendor/bin/pest -c phpunit.coverage.xml --coverage --min=100 --coverage-clover=coverage.xml --coverage-html=coverage-html --coverage-text"
-        ]
+        "analyse": "vendor/bin/phpstan analyse --memory-limit=2G",
+        "build": "composer cursor-rules-refresh && composer fix && composer check",
+        "check": "composer run composer-normalize-check && composer run phpcs-check && composer run pint-check && composer run rector-check && composer run analyse && composer run security-audit && composer run test:coverage",
+        "composer-normalize-check": "@composer normalize --dry-run",
+        "composer-normalize-fix": "@composer normalize",
+        "composer-validate": "composer validate --strict",
+        "cursor-rules-refresh": "vendor/bin/cursor-rules install --force",
+        "fix": "composer run composer-normalize-fix && composer run rector-fix && composer run pint-fix && composer run phpcs-fix || true",
+        "phpcs-check": "vendor/bin/phpcs --standard=ruleset.xml src/ tests/ examples/",
+        "phpcs-fix": "vendor/bin/phpcbf --standard=ruleset.xml src/ tests/ examples/ || true",
+        "pint-check": "vendor/bin/pint src/ tests/ examples/ --test --parallel",
+        "pint-fix": "vendor/bin/pint src/ tests/ examples/ --parallel",
+        "rector-check": "vendor/bin/rector process --dry-run",
+        "rector-fix": "vendor/bin/rector process",
+        "security-audit": "composer audit",
+        "test": "vendor/bin/pest --no-coverage",
+        "test:coverage": "php -dpcov.enabled=1 -dpcov.directory=. -dxdebug.mode=off -dpcov.exclude=\"~vendor~\" vendor/bin/pest --coverage --min=100",
+        "xml-lint": "find . -name '*.xml' ! -path './vendor/*' -exec xmllint --noout {} \\;"
     }
 }
