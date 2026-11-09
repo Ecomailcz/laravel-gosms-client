@@ -3,6 +3,7 @@
 declare(strict_types = 1);
 
 use EcomailGoSms\Exceptions\UnauthorizedRequest;
+use EcomailGoSms\Laravel\GoSmsServiceProvider;
 use EcomailGoSms\LaravelGoSmsClient;
 use EcomailGoSms\Message;
 use EcomailGoSms\Responses\MessageStatusResponse;
@@ -115,7 +116,11 @@ function getClientWithCachedToken(): LaravelGoSmsClient
 
     $app = getApplication();
     $channelId = getChannelId();
-    $httpClient = $app->make(GuzzleClient::class);
+    $httpClient = $app->make(GoSmsServiceProvider::HTTP_CLIENT);
+
+    if (!$httpClient instanceof GuzzleClient) {
+        throw new RuntimeException('The GoSMS HTTP client binding must resolve to a Guzzle client');
+    }
 
     $cached = loadTokenFromCache();
 

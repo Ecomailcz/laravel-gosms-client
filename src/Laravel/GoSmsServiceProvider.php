@@ -14,11 +14,18 @@ use Illuminate\Support\ServiceProvider;
 final class GoSmsServiceProvider extends ServiceProvider
 {
 
+    /**
+     * The container key of the Guzzle client the GoSMS client sends requests with.
+     * It is a package-owned key on purpose: binding \GuzzleHttp\Client itself would hand
+     * the GoSMS base URI and timeout to every class in the host app that injects a Guzzle client.
+     */
+    public const string HTTP_CLIENT = 'gosms.http_client';
+
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__ . '/../../config/gosms.php', 'gosms');
 
-        $this->app->singleton(GuzzleClient::class, static fn (): GuzzleClient => new GuzzleClient([
+        $this->app->singleton(self::HTTP_CLIENT, static fn (): GuzzleClient => new GuzzleClient([
             'base_uri' => Request::BASE_URL,
             'timeout' => 10,
         ]));
@@ -27,9 +34,8 @@ final class GoSmsServiceProvider extends ServiceProvider
             $publicKey = config()->string('gosms.client_id');
             $privateKey = config()->string('gosms.client_secret');
             $defaultChannel = config()->integer('gosms.default_channel');
-            $httpClient = $app->make(GuzzleClient::class);
+            $httpClient = $app->make(self::HTTP_CLIENT);
 
-            /** @phpstan-ignore instanceof.alwaysTrue (binding can be overridden in tests) */
             if (!$httpClient instanceof GuzzleClient) {
                 throw new \InvalidArgumentException('Invalid HTTP client instance');
             }
