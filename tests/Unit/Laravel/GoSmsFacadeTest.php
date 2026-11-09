@@ -9,5 +9,5 @@ use EcomailGoSms\Laravel\GoSmsFacade;
 it('uses gosms facade accessor', function (): void {
     $method = new \ReflectionMethod(GoSmsFacade::class, 'getFacadeAccessor');
 
-    expect($method->invoke(null))->toBe('gosms');
+    expect($method->invoke(object: null))->toBe('gosms');
 });

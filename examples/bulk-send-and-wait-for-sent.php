@@ -33,7 +33,7 @@ function loadTokenFromCache(): ?array
         return null;
     }
 
-    $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+    $data = json_decode($content, associative: true, depth: 512, flags: JSON_THROW_ON_ERROR);
 
     if (!is_array($data) || !isset($data['access_token']) || !is_string($data['access_token']) || $data['access_token'] === '') {
         return null;
@@ -67,8 +67,8 @@ function saveTokenToCache(array $token): void
 /**
  * @throws \EcomailGoSms\Exceptions\BadRequest
  * @throws \EcomailGoSms\Exceptions\InvalidResponseData
- * @throws \Throwable
  * @throws \JsonException
+ * @throws \Throwable
  */
 function authenticateClient(LaravelGoSmsClient $client): void
 {
@@ -84,8 +84,8 @@ function authenticateClient(LaravelGoSmsClient $client): void
 /**
  * @throws \EcomailGoSms\Exceptions\BadRequest
  * @throws \EcomailGoSms\Exceptions\InvalidResponseData
- * @throws \Throwable
  * @throws \JsonException
+ * @throws \Throwable
  */
 function getMessageStatusWithRetry(LaravelGoSmsClient $client, string $customId): MessageStatusResponse
 {
@@ -100,10 +100,10 @@ function getMessageStatusWithRetry(LaravelGoSmsClient $client, string $customId)
 
 /**
  * @throws \EcomailGoSms\Exceptions\BadRequest
- * @throws \Throwable
  * @throws \EcomailGoSms\Exceptions\InvalidResponseData
  * @throws \Illuminate\Contracts\Container\BindingResolutionException
  * @throws \JsonException
+ * @throws \Throwable
  */
 function getClientWithCachedToken(): LaravelGoSmsClient
 {
@@ -128,7 +128,7 @@ function getClientWithCachedToken(): LaravelGoSmsClient
         return new LaravelGoSmsClient($clientId, $clientSecret, $cached['access_token'], $channelId, 'password', '', $httpClient);
     }
 
-    $client = new LaravelGoSmsClient($clientId, $clientSecret, null, $channelId, 'password', '', $httpClient);
+    $client = new LaravelGoSmsClient($clientId, $clientSecret, defaultChannel: $channelId, grantType: 'password', scope: '', httpClient: $httpClient);
     authenticateClient($client);
 
     return $client;
@@ -152,7 +152,7 @@ foreach ($recipients as $recipient) {
     ensureAllowedRecipient($recipient);
 }
 
-$batchId = 'batch-' . uniqid('', true);
+$batchId = 'batch-' . uniqid('', more_entropy: true);
 $messages = [];
 
 foreach ($recipients as $index => $recipient) {

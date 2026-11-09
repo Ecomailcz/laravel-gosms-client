@@ -21,7 +21,7 @@ final readonly class GuzzleHttpClient
      */
     public function __construct(?GuzzleClient $guzzleClient = null, ?array $config = null)
     {
-        if ($guzzleClient !== null) {
+        if ($guzzleClient instanceof \GuzzleHttp\Client) {
             $this->guzzleClient = $guzzleClient;
 
             return;
@@ -71,7 +71,7 @@ final readonly class GuzzleHttpClient
         $options = ['headers' => $headers];
 
         if ($data !== []) {
-            if (in_array(strtoupper($method), ['POST', 'PUT', 'PATCH'], true)) {
+            if (in_array(strtoupper($method), ['POST', 'PUT', 'PATCH'], strict: true)) {
                 $options['form_params'] = $data;
             } else {
                 $options['query'] = $data;
@@ -88,7 +88,7 @@ final readonly class GuzzleHttpClient
      */
     private function decodeResponseBody(string $body): array
     {
-        $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+        $decoded = json_decode($body, associative: true, depth: 512, flags: JSON_THROW_ON_ERROR);
 
         if (!is_array($decoded)) {
             return [];

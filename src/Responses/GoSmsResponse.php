@@ -40,7 +40,7 @@ abstract class GoSmsResponse
     {
         try {
             /** @var array<string, mixed>|null $decoded */
-            $decoded = json_decode($this->responseBody, true, 512, JSON_THROW_ON_ERROR);
+            $decoded = json_decode($this->responseBody, associative: true, depth: 512, flags: JSON_THROW_ON_ERROR);
 
             if (!is_array($decoded)) {
                 return [];

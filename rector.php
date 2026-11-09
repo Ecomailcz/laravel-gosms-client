@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Rector\CodeQuality\Rector\Attribute\ExplicitAttributeNamedArgsRector;
 use Rector\Config\RectorConfig;
 use Rector\Naming\Rector\Class_\RenamePropertyToMatchTypeRector;
 
@@ -19,5 +20,9 @@ return static function (RectorConfig $rectorConfig): void {
 
     $rectorConfig->import(__DIR__ . '/vendor/pekral/rector-rules/rector.php');
     $rectorConfig->parallel();
-    $rectorConfig->skip([RenamePropertyToMatchTypeRector::class]);
+    $rectorConfig->skip([
+        RenamePropertyToMatchTypeRector::class,
+        // PHPUnit marks its attribute constructors @no-named-arguments, so PHPStan rejects #[DataProvider(methodName: ...)].
+        ExplicitAttributeNamedArgsRector::class,
+    ]);
 };

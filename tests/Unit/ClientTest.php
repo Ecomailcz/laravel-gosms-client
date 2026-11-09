@@ -40,8 +40,8 @@ final class ClientTest extends TestCase
 
     /**
      * @throws \EcomailGoSms\Exceptions\BadRequest
-     * @throws \Throwable
      * @throws \EcomailGoSms\Exceptions\InvalidResponseData
+     * @throws \Throwable
      */
     public function testRefreshToken(): void
     {
@@ -162,7 +162,7 @@ final class ClientTest extends TestCase
 
     public function testGetAccessTokenWithoutToken(): void
     {
-        $client = $this->createGoSmsClientWithAccessToken(null);
+        $client = $this->createGoSmsClientWithAccessToken(accessToken: null);
         
         self::assertNull($client->getAccessToken());
     }

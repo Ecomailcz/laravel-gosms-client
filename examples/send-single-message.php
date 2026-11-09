@@ -26,7 +26,7 @@ $message = new Message(
     message: $text,
     channelId: $channelId,
     recipient: $recipient,
-    customId: 'example-' . uniqid('', true),
+    customId: 'example-' . uniqid('', more_entropy: true),
 );
 
 $response = $client->sendMessageAsync($message);

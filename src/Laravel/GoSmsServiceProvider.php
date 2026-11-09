@@ -43,11 +43,10 @@ final class GoSmsServiceProvider extends ServiceProvider
             return new LaravelGoSmsClient(
                 $publicKey,
                 $privateKey,
-                null,
-                $defaultChannel,
-                'password',
-                '',
-                $httpClient,
+                defaultChannel: $defaultChannel,
+                grantType: 'password',
+                scope: '',
+                httpClient: $httpClient,
             );
         });
 
