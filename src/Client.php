@@ -122,7 +122,7 @@ abstract class Client
      */
     private function handleExceptions(Throwable $throwable): void
     {
-        if ($throwable instanceof ClientException && in_array($throwable->getResponse()->getStatusCode(), [400, 403], true)) {
+        if ($throwable instanceof ClientException && in_array($throwable->getResponse()->getStatusCode(), [400, 403], strict: true)) {
             throw new BadRequest($throwable->getResponse());
         }
 

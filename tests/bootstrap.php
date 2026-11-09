@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 $configDir = __DIR__ . '/../config';
 
-if (!is_dir($configDir) && !mkdir($configDir, 0755, true) && !is_dir($configDir)) {
+if (!is_dir($configDir) && !mkdir($configDir, 0755, recursive: true) && !is_dir($configDir)) {
     throw new RuntimeException(sprintf('Directory "%s" was not created', $configDir));
 }
 

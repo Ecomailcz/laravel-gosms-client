@@ -7,6 +7,8 @@ namespace EcomailGoSms\Tests\Unit\Exceptions;
 use EcomailGoSms\Exceptions\InvalidResponseData;
 use Exception;
 use Mockery;
+use PDO;
+use PDOException;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
@@ -24,6 +26,18 @@ final class InvalidResponseDataTest extends TestCase
         self::assertSame(400, $exception->getCode());
         self::assertSame($responseMock, $exception->getResponse());
         self::assertSame(['error' => 'test'], $exception->getResponseData());
+    }
+
+    public function testConstructorFallsBackToStatusCodeWhenPreviousCodeIsString(): void
+    {
+        $responseMock = $this->createMockResponse('{"error": "test"}', 502);
+        $previousException = $this->createPdoExceptionWithStringCode();
+
+        $exception = new InvalidResponseData($responseMock, $previousException);
+
+        self::assertSame('HY000', $previousException->getCode());
+        self::assertSame(502, $exception->getCode());
+        self::assertSame($previousException, $exception->getPrevious());
     }
 
     public function testConstructorWithThrowable(): void
@@ -108,6 +122,20 @@ final class InvalidResponseDataTest extends TestCase
         $bodyMock->allows('getContents')->andReturn($bodyContent);
 
         return $responseMock;
+    }
+
+    private function createPdoExceptionWithStringCode(): PDOException
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        try {
+            $pdo->query('SELECT * FROM missing_table');
+        } catch (PDOException $exception) {
+            return $exception;
+        }
+
+        self::fail('The query on a missing table did not throw a PDOException');
     }
 
 }

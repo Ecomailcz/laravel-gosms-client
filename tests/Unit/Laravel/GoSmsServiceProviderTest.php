@@ -7,6 +7,11 @@ namespace EcomailGoSms\Tests\Unit\Laravel;
 use EcomailGoSms\Client;
 use EcomailGoSms\Laravel\GoSmsServiceProvider;
 use EcomailGoSms\LaravelGoSmsClient;
+use EcomailGoSms\Requests\Request;
+use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
@@ -61,10 +66,39 @@ it('throws when http client is not http client instance', function (): void {
     /** @var \Illuminate\Foundation\Application $app */
     $app = app();
 
-    $app->bind(\GuzzleHttp\Client::class, static fn (): \stdClass => new \stdClass());
+    $app->bind(GoSmsServiceProvider::HTTP_CLIENT, static fn (): \stdClass => new \stdClass());
 
     expect(static fn () => $app->make(Client::class))
         ->toThrow(\InvalidArgumentException::class, 'Invalid HTTP client instance');
+});
+
+it('does not bind the Guzzle client class in the host container', function (): void {
+    /** @var \Illuminate\Foundation\Application $app */
+    $app = app();
+
+    $goSmsHttpClient = $app->make(GoSmsServiceProvider::HTTP_CLIENT);
+
+    expect($app->bound(GuzzleClient::class))->toBeFalse()
+        ->and($goSmsHttpClient)->toBeInstanceOf(GuzzleClient::class)
+        ->and($goSmsHttpClient)->toBe($app->make(GoSmsServiceProvider::HTTP_CLIENT))
+        ->and($app->make(GuzzleClient::class))->not->toBe($goSmsHttpClient);
+});
+
+it('sends GoSMS requests through the package http client binding', function (): void {
+    /** @var \Illuminate\Foundation\Application $app */
+    $app = app();
+
+    $mockHandler = new MockHandler([
+        new Response(200, [], (string) file_get_contents(__DIR__ . '/../../Fixtures/authenticate.json')),
+    ]);
+    $app->instance(GoSmsServiceProvider::HTTP_CLIENT, new GuzzleClient(['handler' => HandlerStack::create($mockHandler)]));
+
+    /** @var \EcomailGoSms\LaravelGoSmsClient $client */
+    $client = $app->make(Client::class);
+    $client->authenticate();
+
+    expect($mockHandler->count())->toBe(0)
+        ->and((string) $mockHandler->getLastRequest()?->getUri())->toBe(Request::BASE_URL . Request::API_PATH . '/auth/token');
 });
 
 it('resolves client as singleton', function (): void {

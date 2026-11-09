@@ -18,7 +18,7 @@ beforeEach(function (): void {
 });
 
 it('constructor uses passed config when no client passed', function (): void {
-    $client = new GuzzleHttpClient(null, [
+    $client = new GuzzleHttpClient(config: [
         'base_uri' => 'http://127.0.0.1:19999/',
         'timeout' => 15,
     ]);
@@ -38,7 +38,7 @@ it('constructor uses config when laravel bootstrapped', function (): void {
 it('constructor uses config timeout when only base uri passed', function (): void {
     Config::set('gosms.timeout', 20);
 
-    $client = new GuzzleHttpClient(null, ['base_uri' => 'http://127.0.0.1:19999/']);
+    $client = new GuzzleHttpClient(config: ['base_uri' => 'http://127.0.0.1:19999/']);
 
     expect(fn (): array => $client->request('GET', 'test'))->toThrow(GoSmsRequestException::class);
 });

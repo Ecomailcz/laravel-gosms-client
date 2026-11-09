@@ -24,7 +24,7 @@ foreach ($recipients as $recipient) {
     ensureAllowedRecipient($recipient);
 }
 
-$batchId = 'batch-' . uniqid('', true);
+$batchId = 'batch-' . uniqid('', more_entropy: true);
 $messages = [];
 
 foreach ($recipients as $index => $recipient) {
